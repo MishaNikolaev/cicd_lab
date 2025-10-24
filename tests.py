@@ -1,8 +1,4 @@
-#!/usr/bin/env python3
-"""
-OpenBMC CI/CD Test Runner - COMPLETE VERSION FOR LAB 7
-Включает все требуемые тесты: автотесты, WebUI тесты, нагрузочное тестирование
-"""
+
 import subprocess
 import sys
 import os
@@ -12,7 +8,6 @@ import urllib3
 import json
 from datetime import datetime
 
-# Disable SSL warnings
 urllib3.disable_warnings()
 
 
@@ -24,7 +19,6 @@ class OpenBMCTestRunner:
         self.test_results = []
 
     def wait_for_bmc_ready(self, timeout=300):
-        """Wait for BMC to be ready"""
         print(" Waiting for OpenBMC to be ready...")
         start_time = time.time()
 
