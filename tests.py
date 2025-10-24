@@ -42,7 +42,6 @@ class OpenBMCTestRunner:
         return False
 
     def run_basic_connection_test(self):
-        """Basic connection test for OpenBMC"""
         print(" Running basic connection tests...")
         try:
             session = requests.Session()
@@ -52,7 +51,6 @@ class OpenBMCTestRunner:
             tests_passed = 0
             total_tests = 3
 
-            # Test 1: Service Root
             response = session.get(f"{self.bmc_url}/redfish/v1/")
             if response.status_code == 200:
                 print(" Service Root: Connected")
@@ -61,7 +59,6 @@ class OpenBMCTestRunner:
                 print(f" Service Root: Failed with status {response.status_code}")
                 return False
 
-            # Test 2: System Info
             response = session.get(f"{self.bmc_url}/redfish/v1/Systems/system")
             if response.status_code == 200:
                 data = response.json()
@@ -72,7 +69,6 @@ class OpenBMCTestRunner:
                 print(f" System Info: Failed with status {response.status_code}")
                 return False
 
-            # Test 3: Managers collection
             response = session.get(f"{self.bmc_url}/redfish/v1/Managers")
             if response.status_code == 200:
                 print(" Managers: Accessible")
@@ -88,10 +84,8 @@ class OpenBMCTestRunner:
             return False
 
     def run_api_tests_with_pytest(self):
-        """Run comprehensive API tests using pytest"""
         print(" Running API tests with pytest...")
         try:
-            # Create comprehensive API test file
             test_content = '''
 import pytest
 import requests
@@ -163,11 +157,9 @@ class TestOpenBMCAPI:
         assert isinstance(data, dict)
         assert "@odata.context" in data or "@odata.id" in data
 '''
-            # Write test file
             with open('openbmc_api_test.py', 'w') as f:
                 f.write(test_content)
 
-            # Run pytest with detailed reporting
             result = subprocess.run([
                 'python3', '-m', 'pytest',
                 'openbmc_api_test.py', '-v',
@@ -176,7 +168,6 @@ class TestOpenBMCAPI:
                 '--self-contained-html'
             ], capture_output=True, text=True, timeout=120)
 
-            # Cleanup
             if os.path.exists('openbmc_api_test.py'):
                 os.remove('openbmc_api_test.py')
 
@@ -199,7 +190,7 @@ class TestOpenBMCAPI:
             return False
 
     def run_webui_tests(self):
-        """Run WebUI tests with Selenium for OpenBMC"""
+
         print("🖥 Running WebUI tests with Selenium...")
         try:
             from selenium import webdriver

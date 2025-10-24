@@ -12,26 +12,18 @@ services:
     volumes:
       - jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./:/var/jenkins_home/workspace/openbmc-tests
+      - ./:/var/jenkins_home/workspace/openbmc-pipeline
     environment:
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
     networks:
       - jenkins-net
 
-  qemu-openbmc:
-    image: openbmc/qemu:latest
-    container_name: qemu-openbmc
-    privileged: true
-    ports:
-      - "2443:2443"
-      - "2222:2222"
+  bmc-simulator:
+    image: alpine:latest
+    container_name: bmc-simulator
+    command: ["sleep", "infinity"]
     networks:
       - jenkins-net
-    healthcheck:
-      test: ["CMD", "curl", "-k", "-u", "root:0penBmc", "https://localhost:2443/redfish/v1/"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
 volumes:
   jenkins_data:
