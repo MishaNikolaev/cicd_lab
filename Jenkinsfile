@@ -16,21 +16,17 @@ pipeline {
                     ls -la
                     mkdir -p test-results
                     echo "Python version:"
-                    python3 --version || echo "Python3 not available"
+                    python3 --version
                 '''
             }
         }
 
-        stage('Install Python in Container') {
+        stage('Install Python Dependencies') {
             steps {
-                echo 'Installing Python and Dependencies in Jenkins Container'
+                echo 'Installing Python Dependencies'
                 sh '''
-                    apt-get update
-                    apt-get install -y python3 python3-pip
-                    pip3 install requests pytest selenium urllib3
-                    echo "=== Python Installation Complete ==="
-                    python3 --version
-                    pip3 --version
+                    pip3 install --break-system-packages requests pytest selenium urllib3
+                    echo "Dependencies installed successfully"
                 '''
             }
         }
