@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Checkout & Setup') {
             steps {
-                echo '🚀 Starting OpenBMC CI/CD Pipeline'
+                echo 'Starting OpenBMC CI/CD Pipeline'
                 sh '''
                     echo "=== Repository Contents ==="
                     ls -la
@@ -23,7 +23,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo '📦 Installing Python Dependencies'
+                echo 'Installing Python Dependencies'
                 sh '''
                     pip3 install requests pytest selenium urllib3 || echo "Cannot install dependencies"
                 '''
@@ -32,7 +32,7 @@ pipeline {
 
         stage('Start Test Environment') {
             steps {
-                echo '🐳 Starting Test Environment'
+                echo 'Starting Test Environment'
                 sh '''
                     echo "Starting test environment..." > test-results/environment-setup.log
                     echo "BMC URL: ${BMC_URL}" >> test-results/environment-setup.log
@@ -49,7 +49,7 @@ pipeline {
 
         stage('Run Connectivity Tests') {
             steps {
-                echo '🔌 Running Connectivity Tests'
+                echo 'Running Connectivity Tests'
                 sh '''
                     # Пробуем запустить реальный тест
                     python3 -c "
@@ -74,7 +74,7 @@ except Exception as e:
 
         stage('Run API Tests') {
             steps {
-                echo '🧪 Running API Tests'
+                echo 'Running API Tests'
                 sh '''
                     # Создаем простой XML отчет без сложных кавычек
                     cat > test-results/api-tests.xml << EOF
@@ -114,7 +114,7 @@ except Exception as e:
 
         stage('Run Load Tests') {
             steps {
-                echo '📊 Running Load Tests'
+                echo 'Running Load Tests'
                 sh '''
                     # Пробуем реальные нагрузочные тесты
                     python3 -c "
@@ -147,7 +147,7 @@ except Exception as e:
 
         stage('Run Security Tests') {
             steps {
-                echo '🔒 Running Security Tests'
+                echo 'Running Security Tests'
                 sh '''
                     # Пробуем реальные security тесты
                     python3 -c "
@@ -177,7 +177,7 @@ except Exception as e:
 
         stage('Generate Final Report') {
             steps {
-                echo '📈 Generating Final Report'
+                echo 'Generating Final Report'
                 sh '''
                     echo "OpenBMC CI/CD Pipeline Report" > test-results/final-report.txt
                     echo "=============================" >> test-results/final-report.txt
@@ -192,7 +192,7 @@ except Exception as e:
 
     post {
         always {
-            echo "📦 Collecting Test Artifacts"
+            echo "Collecting Test Artifacts"
             sh '''
                 echo "=== Generated Artifacts ==="
                 ls -la test-results/
@@ -204,13 +204,13 @@ except Exception as e:
             junit 'test-results/**/*.xml'
         }
         success {
-            echo "✅ Pipeline completed successfully!"
+            echo "Pipeline completed successfully!"
         }
         failure {
-            echo "❌ Pipeline completed with failures"
+            echo "Pipeline completed with failures"
         }
         unstable {
-            echo "⚠️ Pipeline completed with warnings"
+            echo "Pipeline completed with warnings"
         }
     }
 }

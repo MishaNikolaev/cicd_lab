@@ -191,7 +191,7 @@ class TestOpenBMCAPI:
 
     def run_webui_tests(self):
 
-        print("🖥 Running WebUI tests with Selenium...")
+        print("Running WebUI tests with Selenium...")
         try:
             from selenium import webdriver
             from selenium.webdriver.common.by import By
@@ -200,7 +200,6 @@ class TestOpenBMCAPI:
             from selenium.webdriver.support import expected_conditions as EC
             import time
 
-            # Setup Chrome options for headless mode
             chrome_options = Options()
             chrome_options.add_argument("--headless")
             chrome_options.add_argument("--no-sandbox")
@@ -208,7 +207,6 @@ class TestOpenBMCAPI:
             chrome_options.add_argument("--disable-gpu")
             chrome_options.add_argument("--window-size=1920,1080")
 
-            # Use Chromium which is available in WSL
             chrome_options.binary_location = "/usr/bin/chromium"
 
             try:
@@ -222,12 +220,10 @@ class TestOpenBMCAPI:
             total_webui_tests = 4
 
             try:
-                # Test 1: Basic page accessibility
                 print("   Testing basic page accessibility...")
                 driver.get(self.bmc_url)
                 time.sleep(3)
 
-                # Take screenshot for evidence
                 driver.save_screenshot('test-results/webui-homepage.png')
 
                 page_title = driver.title
@@ -237,7 +233,6 @@ class TestOpenBMCAPI:
                     webui_tests_passed += 1
                     print("    Page title test passed")
 
-                # Test 2: Check for common BMC UI elements
                 print("   Checking for BMC UI elements...")
                 page_source = driver.page_source.lower()
 
@@ -250,12 +245,10 @@ class TestOpenBMCAPI:
                 else:
                     print(f"    Few BMC indicators found: {found_indicators}")
 
-                # Test 3: Test Redfish endpoint via browser
                 print("   Testing Redfish endpoint via browser...")
                 driver.get(f"{self.bmc_url}/redfish/v1/")
                 time.sleep(2)
 
-                # Check if we get JSON response or HTML interface
                 current_url = driver.current_url
                 page_source = driver.page_source
 
@@ -263,12 +256,10 @@ class TestOpenBMCAPI:
                     webui_tests_passed += 1
                     print("    Redfish endpoint accessible")
 
-                # Test 4: Test login page (if exists)
                 print("   Testing login page...")
                 driver.get(f"{self.bmc_url}/login")
                 time.sleep(2)
 
-                # Look for login form elements
                 login_elements = driver.find_elements(By.TAG_NAME, "input")
                 if login_elements:
                     webui_tests_passed += 1
@@ -278,11 +269,11 @@ class TestOpenBMCAPI:
 
                 print(f"    WebUI tests: {webui_tests_passed}/{total_webui_tests} passed")
 
-                return webui_tests_passed >= 2  # At least 2 tests should pass
+                return webui_tests_passed >= 2
 
             except Exception as e:
                 print(f"    WebUI test execution error: {e}")
-                # Take screenshot on error
+
                 try:
                     driver.save_screenshot('test-results/webui-error.png')
                 except:
@@ -301,14 +292,12 @@ class TestOpenBMCAPI:
             return False
 
     def run_load_tests(self):
-        """Run comprehensive load tests for OpenBMC"""
         print(" Running load tests...")
         try:
             session = requests.Session()
             session.auth = (self.bmc_username, self.bmc_password)
             session.verify = False
 
-            # Test endpoints for load testing
             endpoints = [
                 "/redfish/v1/",
                 "/redfish/v1/Systems/system",
@@ -326,7 +315,6 @@ class TestOpenBMCAPI:
             print("   Starting load test with 20 requests...")
             start_time = time.time()
 
-            # Make multiple concurrent requests
             for i in range(20):
                 endpoint = endpoints[i % len(endpoints)]
                 request_start = time.time()
@@ -349,7 +337,6 @@ class TestOpenBMCAPI:
             end_time = time.time()
             total_time = end_time - start_time
 
-            # Calculate metrics
             success_rate = (load_results['successful_requests'] / load_results['total_requests']) * 100
             avg_response_time = sum(load_results['response_times']) / len(load_results['response_times']) if \
             load_results['response_times'] else 0
@@ -362,31 +349,28 @@ class TestOpenBMCAPI:
             print(f"      Throughput: {requests_per_second:.1f} req/sec")
             print(f"      Total time: {total_time:.2f}s")
 
-            # Save load test results
             with open('test-results/load-test-results.json', 'w') as f:
                 json.dump(load_results, f, indent=2)
 
-            return success_rate >= 70.0  # 70% success rate required
+            return success_rate >= 70.0
 
         except Exception as e:
             print(f" Load test failed: {e}")
             return False
 
     def run_security_checks(self):
-        """Run comprehensive security checks"""
+
         print(" Running security checks...")
         security_checks_passed = 0
         total_checks = 4
 
         try:
-            # Check 1: HTTPS usage
             if self.bmc_url.startswith('https://'):
                 print("    Security: Using HTTPS")
                 security_checks_passed += 1
             else:
                 print("    Security: Not using HTTPS")
 
-            # Check 2: Authentication requirement
             session = requests.Session()
             session.verify = False
 
@@ -396,7 +380,6 @@ class TestOpenBMCAPI:
                 print("    Security: Authentication required for system data")
                 security_checks_passed += 1
             elif response.status_code == 200:
-                # Check if sensitive data is exposed without auth
                 data = response.json()
                 sensitive_fields = ['SerialNumber', 'UUID', 'HostName']
                 if any(field in data for field in sensitive_fields):
@@ -408,33 +391,30 @@ class TestOpenBMCAPI:
                 print(f"    Security: Unexpected status without auth: {response.status_code}")
                 security_checks_passed += 1
 
-            # Check 3: Password strength (basic check)
             if len(self.bmc_password) >= 8:
                 print("    Security: Password length adequate")
                 security_checks_passed += 1
             else:
                 print("    Security: Password may be too short")
 
-            # Check 4: SSL certificate validation
             try:
                 response = requests.get(self.bmc_url, verify=True, timeout=5)
                 print("    Security: Valid SSL certificate")
             except:
                 print("    Security: SSL certificate validation failed (expected for test environments)")
-                security_checks_passed += 1  # Still pass in test environments
+                security_checks_passed += 1
 
-            # Final security score
             security_score = (security_checks_passed / total_checks) * 100
             print(f"    Security score: {security_checks_passed}/{total_checks} ({security_score:.1f}%)")
 
-            return security_score >= 50.0  # At least 50% security score
+            return security_score >= 50.0
 
         except Exception as e:
             print(f"    Security check had issues: {e}")
-            return True  # Don't fail build on security check issues
+            return True
 
     def run_comprehensive_unit_tests(self):
-        """Run comprehensive unit tests"""
+
         print(" Running comprehensive unit tests...")
         try:
             # Create unit test file
@@ -500,11 +480,9 @@ class TestOpenBMCUnit:
         assert test_url.startswith('https://')
         assert ':2443' in test_url
 '''
-            # Write unit test file
             with open('unit_tests.py', 'w') as f:
                 f.write(unit_test_content)
 
-            # Run unit tests
             result = subprocess.run([
                 'python3', '-m', 'pytest',
                 'unit_tests.py', '-v',
@@ -513,7 +491,6 @@ class TestOpenBMCUnit:
                 '--self-contained-html'
             ], capture_output=True, text=True, timeout=60)
 
-            # Cleanup
             if os.path.exists('unit_tests.py'):
                 os.remove('unit_tests.py')
 
@@ -529,7 +506,6 @@ class TestOpenBMCUnit:
             return False
 
     def generate_comprehensive_report(self):
-        """Generate comprehensive test report"""
         print("\n" + "=" * 60)
         print(" COMPREHENSIVE TEST EXECUTION REPORT")
         print("=" * 60)
@@ -551,7 +527,6 @@ class TestOpenBMCUnit:
         success_rate = (passed / total) * 100
         print(f"TOTAL: {passed}/{total} tests passed ({success_rate:.1f}%)")
 
-        # Overall status
         if success_rate == 100:
             print(" EXCELLENT: All tests passed!")
             overall_status = "SUCCESS"
@@ -568,7 +543,6 @@ class TestOpenBMCUnit:
         print(f"OVERALL STATUS: {overall_status}")
         print("=" * 60)
 
-        # Save report to file
         report_data = {
             'timestamp': datetime.now().isoformat(),
             'bmc_url': self.bmc_url,
@@ -585,21 +559,18 @@ class TestOpenBMCUnit:
         return passed == total
 
     def run_all_tests(self):
-        """Run all test suites"""
+
         print(" Starting Comprehensive OpenBMC CI/CD Test Suite")
         print(f"BMC URL: {self.bmc_url}")
         print(f"Start time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)
 
-        # Create test results directory
         os.makedirs('test-results', exist_ok=True)
 
-        # Wait for BMC to be ready
         if not self.wait_for_bmc_ready():
-            print("❌ Cannot proceed - BMC is not ready")
+            print("Cannot proceed - BMC is not ready")
             return False
 
-        # Define all test suites in execution order
         test_suites = [
             ("Basic Connection", self.run_basic_connection_test),
             ("Unit Tests", self.run_comprehensive_unit_tests),
@@ -626,7 +597,6 @@ class TestOpenBMCUnit:
                 self.test_results.append((test_name, False))
                 all_passed = False
 
-        # Generate final report
         print("\n" + "=" * 60)
         print(" GENERATING FINAL TEST REPORT")
         print("=" * 60)
