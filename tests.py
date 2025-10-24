@@ -2,10 +2,15 @@
 import subprocess
 import sys
 import os
-import time
 import requests
 import urllib3
 import json
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
 from datetime import datetime
 
 urllib3.disable_warnings()
@@ -193,12 +198,6 @@ class TestOpenBMCAPI:
 
         print("Running WebUI tests with Selenium...")
         try:
-            from selenium import webdriver
-            from selenium.webdriver.common.by import By
-            from selenium.webdriver.chrome.options import Options
-            from selenium.webdriver.support.ui import WebDriverWait
-            from selenium.webdriver.support import expected_conditions as EC
-            import time
 
             chrome_options = Options()
             chrome_options.add_argument("--headless")
@@ -417,7 +416,6 @@ class TestOpenBMCAPI:
 
         print(" Running comprehensive unit tests...")
         try:
-            # Create unit test file
             unit_test_content = '''
 import pytest
 import requests
