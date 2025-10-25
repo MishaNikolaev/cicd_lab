@@ -50,19 +50,9 @@ if [ -f "$QEMU_PID_FILE" ]; then
     rm -f "$QEMU_PID_FILE"
 fi
 
-# Create a temporary disk image for QEMU
-DISK_IMAGE="/tmp/openbmc-disk.img"
-if [ -f "$DISK_IMAGE" ]; then
-    rm -f "$DISK_IMAGE"
-fi
-
-# Convert MTD to QEMU-compatible format
-echo "Converting MTD to QEMU format..."
-qemu-img create -f qcow2 "$DISK_IMAGE" 2G
-
-# Copy MTD content to the disk image
-echo "Copying MTD content to disk image..."
-dd if="$MTD_FILE" of="$DISK_IMAGE" bs=1M conv=notrunc
+# Use MTD file directly as disk image
+DISK_IMAGE="$MTD_FILE"
+echo "Using MTD file directly as disk image: $DISK_IMAGE"
 
 # Start QEMU with OpenBMC - simplified version for Docker
 echo "Starting QEMU with OpenBMC image..."
@@ -72,7 +62,7 @@ qemu-system-x86_64 \
     -machine pc \
     -cpu qemu64 \
     -m 1024 \
-    -drive file="$DISK_IMAGE",format=qcow2,if=virtio \
+    -drive file="$DISK_IMAGE",format=raw,if=virtio \
     -netdev user,id=net0,hostfwd=tcp::2443-:2443,hostfwd=tcp::8080-:8080 \
     -device virtio-net-pci,netdev=net0 \
     -display none \
