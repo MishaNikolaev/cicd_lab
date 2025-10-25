@@ -7,13 +7,12 @@ services:
     ports:
       - "8080:8080"
       - "50000:50000"
-      - "2443:2443"  # OpenBMC HTTPS port
-      - "8080:8080"  # OpenBMC HTTP port
+      - "2443:2443"  
+      - "8080:8080" 
     volumes:
       - jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./:/workspace  # Mount workspace for access to MTD file
-    environment:
+      - ./:/workspace 
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
     command: |
       bash -c "
