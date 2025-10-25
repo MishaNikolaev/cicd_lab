@@ -245,7 +245,7 @@ try:
         f.write('=====================================\\\\n')
         f.write(f'Timestamp: {datetime.now().isoformat()}\\\\n')
         f.write(f'BMC URL: {bmc_url}\\\\n')
-        f.write(f'Status: {\"SUCCESS\" if success_rate >= 66 else \"PARTIAL\" if success_rate >= 33 else \"FAILED\"}\\\\n')
+        f.write(f'Status: {"SUCCESS" if success_rate >= 66 else "PARTIAL" if success_rate >= 33 else "FAILED"}\\n')
         f.write(f'Success Rate: {success_rate:.1f}%\\\\n')
         f.write('\\\\nTest Details:\\\\n')
         for test in connectivity_results['tests']:
