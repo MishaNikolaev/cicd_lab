@@ -57,13 +57,13 @@ echo "Using MTD file directly as disk image: $DISK_IMAGE"
 # Start QEMU with OpenBMC - simplified version for Docker
 echo "Starting QEMU with OpenBMC image..."
 
-# QEMU command for OpenBMC
+# QEMU command for OpenBMC with improved networking
 qemu-system-x86_64 \
     -machine pc \
     -cpu qemu64 \
-    -m 1024 \
+    -m 2048 \
     -drive file="$DISK_IMAGE",format=raw,if=virtio \
-    -netdev user,id=net0,hostfwd=tcp::2443-:2443,hostfwd=tcp::8081-:8080 \
+    -netdev user,id=net0,hostfwd=tcp::2443-:2443,hostfwd=tcp::8080-:8080,hostfwd=tcp::8081-:8081 \
     -device virtio-net-pci,netdev=net0 \
     -display none \
     -serial file:/tmp/qemu-serial.log \
@@ -73,7 +73,7 @@ qemu-system-x86_64 \
     > "$QEMU_LOG_FILE" 2>&1
 
 # Wait for QEMU to start
-sleep 3
+sleep 5
 
 # Check if QEMU is running
 if [ -f "$QEMU_PID_FILE" ]; then
