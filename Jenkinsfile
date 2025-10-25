@@ -39,7 +39,6 @@ pipeline {
                     echo "BMC URL: ${BMC_URL}" >> test-results/environment-setup.log
                     echo "MTD File: obmc-phosphor-image-romulus-20250902012112.static.mtd" >> test-results/environment-setup.log
                     
-                    # Check if MTD file exists
                     if [ ! -f "obmc-phosphor-image-romulus-20250902012112.static.mtd" ]; then
                         echo "ERROR: MTD file not found!" >> test-results/environment-setup.log
                         echo "Available files:" >> test-results/environment-setup.log
