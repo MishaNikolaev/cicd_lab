@@ -54,20 +54,26 @@ fi
 
 # Convert MTD to QEMU-compatible format
 echo "Converting MTD to QEMU format..."
-qemu-img create -f qcow2 "$DISK_IMAGE" 1G
+qemu-img create -f qcow2 "$DISK_IMAGE" 2G
+
+# Copy MTD content to the disk image
+echo "Copying MTD content to disk image..."
+dd if="$MTD_FILE" of="$DISK_IMAGE" bs=1M conv=notrunc
 
 # Start QEMU with OpenBMC - simplified version for Docker
 echo "Starting QEMU with OpenBMC image..."
 
-# Simplified QEMU command that should work in Docker
+# QEMU command for OpenBMC
 qemu-system-x86_64 \
     -machine pc \
     -cpu qemu64 \
-    -m 512 \
+    -m 1024 \
     -drive file="$DISK_IMAGE",format=qcow2,if=virtio \
     -netdev user,id=net0,hostfwd=tcp::2443-:2443,hostfwd=tcp::8080-:8080 \
     -device virtio-net-pci,netdev=net0 \
     -nographic \
+    -serial mon:stdio \
+    -monitor telnet:127.0.0.1:4444,server,nowait \
     -daemonize \
     -pidfile "$QEMU_PID_FILE" \
     > "$QEMU_LOG_FILE" 2>&1
