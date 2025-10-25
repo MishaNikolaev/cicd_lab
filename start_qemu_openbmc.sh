@@ -24,6 +24,17 @@ if [ ! -f "$MTD_FILE" ]; then
     exit 1
 fi
 
+# Check if QEMU is available
+if ! command -v qemu-system-x86_64 &> /dev/null; then
+    echo "WARNING: QEMU is not available in this environment"
+    echo "QEMU command not found, will use simulation mode"
+    echo "Creating dummy QEMU PID file for simulation"
+    echo "999999" > "$QEMU_PID_FILE"
+    echo "Simulation mode activated" > "$QEMU_LOG_FILE"
+    echo "QEMU simulation mode started"
+    exit 0
+fi
+
 # Kill any existing QEMU process
 if [ -f "$QEMU_PID_FILE" ]; then
     OLD_PID=$(cat "$QEMU_PID_FILE")

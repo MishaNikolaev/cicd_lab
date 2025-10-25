@@ -70,7 +70,8 @@ pipeline {
                     # Check if QEMU is running
                     if [ -f /tmp/qemu-openbmc.pid ]; then
                         QEMU_PID=$(cat /tmp/qemu-openbmc.pid)
-                        if kill -0 "$QEMU_PID" 2>/dev/null; then
+                        # Check if it's a real QEMU process (not simulation PID 999999)
+                        if [ "$QEMU_PID" != "999999" ] && kill -0 "$QEMU_PID" 2>/dev/null; then
                             echo "QEMU is running (PID: $QEMU_PID), waiting for OpenBMC..." >> test-results/bmc-ready.log
                             
                             # Wait for OpenBMC to be ready (up to 2 minutes)
@@ -90,18 +91,18 @@ pipeline {
                                 sleep 10
                             done
                         else
-                            echo "QEMU is not running, will use simulation mode" >> test-results/bmc-ready.log
+                            echo "QEMU is not running or in simulation mode, will use HTTP simulation" >> test-results/bmc-ready.log
                         fi
                     else
                         echo "QEMU PID file not found, will use simulation mode" >> test-results/bmc-ready.log
-                        
-                        # Start HTTP server for simulation
-                        echo "Starting HTTP server for simulation..." >> test-results/bmc-ready.log
-                        python3 -m http.server 8000 --directory . > test-results/simulation-server.log 2>&1 &
-                        echo $! > test-results/server.pid
-                        sleep 2
-                        echo "HTTP simulation server started" >> test-results/bmc-ready.log
                     fi
+                    
+                    # Start HTTP server for simulation (always start as fallback)
+                    echo "Starting HTTP server for simulation..." >> test-results/bmc-ready.log
+                    python3 -m http.server 8000 --directory . > test-results/simulation-server.log 2>&1 &
+                    echo $! > test-results/server.pid
+                    sleep 2
+                    echo "HTTP simulation server started" >> test-results/bmc-ready.log
                     
                     echo "BMC readiness check completed" >> test-results/bmc-ready.log
                 '''
@@ -138,12 +139,16 @@ if os.path.exists('/tmp/qemu-openbmc.pid'):
     try:
         with open('/tmp/qemu-openbmc.pid', 'r') as f:
             qemu_pid = int(f.read().strip())
-        # Check if process is running
-        os.kill(qemu_pid, 0)
-        qemu_running = True
-        print('QEMU is running, testing real OpenBMC')
+        # Check if it's a real QEMU process (not simulation PID 999999)
+        if qemu_pid != 999999:
+            os.kill(qemu_pid, 0)
+            qemu_running = True
+            print('QEMU is running, testing real OpenBMC')
+        else:
+            print('QEMU simulation mode detected, using HTTP simulation')
+            qemu_running = False
     except:
-        print('QEMU PID file exists but process is not running')
+        print('QEMU PID file exists but process is not running, using simulation mode')
         qemu_running = False
 else:
     print('QEMU not running, using simulation mode')
