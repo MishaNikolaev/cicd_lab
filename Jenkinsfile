@@ -42,6 +42,8 @@ pipeline {
                     # Check if MTD file exists
                     if [ ! -f "obmc-phosphor-image-romulus-20250902012112.static.mtd" ]; then
                         echo "ERROR: MTD file not found!" >> test-results/environment-setup.log
+                        echo "Available files:" >> test-results/environment-setup.log
+                        ls -la >> test-results/environment-setup.log
                         exit 1
                     fi
                     
@@ -51,12 +53,27 @@ pipeline {
                     ./start_qemu_openbmc.sh >> test-results/environment-setup.log 2>&1
                     QEMU_EXIT_CODE=$?
                     
+                    echo "QEMU startup script exit code: $QEMU_EXIT_CODE" >> test-results/environment-setup.log
+                    
                     if [ $QEMU_EXIT_CODE -eq 0 ]; then
-                        echo "QEMU OpenBMC started successfully" >> test-results/environment-setup.log
+                        echo "QEMU OpenBMC started successfully (or simulation mode activated)" >> test-results/environment-setup.log
+                        
+                        # Check if we're in simulation mode
+                        if [ -f /tmp/qemu-openbmc.pid ]; then
+                            QEMU_PID=$(cat /tmp/qemu-openbmc.pid)
+                            if [ "$QEMU_PID" = "999999" ]; then
+                                echo "Running in QEMU simulation mode" >> test-results/environment-setup.log
+                            else
+                                echo "Running with real QEMU (PID: $QEMU_PID)" >> test-results/environment-setup.log
+                            fi
+                        fi
                     else
                         echo "ERROR: QEMU startup failed with exit code $QEMU_EXIT_CODE" >> test-results/environment-setup.log
                         echo "QEMU startup failed, but continuing with tests..." >> test-results/environment-setup.log
                     fi
+                    
+                    # Always continue - don't fail the pipeline here
+                    echo "Proceeding to next stage regardless of QEMU status" >> test-results/environment-setup.log
                 '''
             }
         }

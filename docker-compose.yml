@@ -9,16 +9,17 @@ services:
       - "50000:50000"
       - "2443:2443"  
       - "8080:8080" 
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
     volumes:
       - jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./:/workspace 
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - ./:/workspace
     command: |
       bash -c "
         # Install minimal packages that are likely to work
         apt-get update || echo 'Network issue, continuing...' &&
-        apt-get install -y python3 python3-pip curl wget || echo 'Some packages failed' &&
+        apt-get install -y python3 python3-pip curl wget qemu-system-x86 || echo 'Some packages failed' &&
         pip3 install --break-system-packages requests pytest selenium urllib3 || echo 'Some pip packages failed' &&
         /usr/local/bin/jenkins.sh
       "

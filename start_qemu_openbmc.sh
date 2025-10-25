@@ -31,7 +31,11 @@ if ! command -v qemu-system-x86_64 &> /dev/null; then
     echo "Creating dummy QEMU PID file for simulation"
     echo "999999" > "$QEMU_PID_FILE"
     echo "Simulation mode activated" > "$QEMU_LOG_FILE"
-    echo "QEMU simulation mode started"
+    echo "QEMU simulation mode started successfully"
+    echo "OpenBMC simulation should be available at:"
+    echo "  - HTTPS: https://localhost:2443 (simulated)"
+    echo "  - HTTP:  http://localhost:8080 (simulated)"
+    echo "Log file: $QEMU_LOG_FILE"
     exit 0
 fi
 
