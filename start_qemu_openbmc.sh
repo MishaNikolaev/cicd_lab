@@ -75,7 +75,7 @@ qemu-system-x86_64 \
     -drive file="$DISK_IMAGE",format=qcow2,if=virtio \
     -netdev user,id=net0,hostfwd=tcp::2443-:2443,hostfwd=tcp::8080-:8080 \
     -device virtio-net-pci,netdev=net0 \
-    -nographic \
+    -display none \
     -serial mon:stdio \
     -monitor telnet:127.0.0.1:4444,server,nowait \
     -daemonize \
