@@ -5,16 +5,22 @@
 
 set -e
 
-MTD_FILE="/workspace/obmc-phosphor-image-romulus-20250902012112.static.mtd"
+# Use current directory instead of /workspace
+MTD_FILE="./obmc-phosphor-image-romulus-20250902012112.static.mtd"
 QEMU_PID_FILE="/tmp/qemu-openbmc.pid"
 QEMU_LOG_FILE="/tmp/qemu-openbmc.log"
 
 echo "=== Starting QEMU with OpenBMC ==="
 echo "MTD File: $MTD_FILE"
+echo "Current directory: $(pwd)"
+echo "Files in current directory:"
+ls -la
 
 # Check if MTD file exists
 if [ ! -f "$MTD_FILE" ]; then
     echo "ERROR: MTD file not found at $MTD_FILE"
+    echo "Available files:"
+    ls -la
     exit 1
 fi
 
@@ -39,27 +45,24 @@ fi
 echo "Converting MTD to QEMU format..."
 qemu-img create -f qcow2 "$DISK_IMAGE" 1G
 
-# Start QEMU with OpenBMC
+# Start QEMU with OpenBMC - simplified version for Docker
 echo "Starting QEMU with OpenBMC image..."
 
-# QEMU command for OpenBMC
+# Simplified QEMU command that should work in Docker
 qemu-system-x86_64 \
-    -machine q35 \
+    -machine pc \
     -cpu qemu64 \
-    -m 1024 \
+    -m 512 \
     -drive file="$DISK_IMAGE",format=qcow2,if=virtio \
-    -drive file="$MTD_FILE",format=raw,if=mtd \
     -netdev user,id=net0,hostfwd=tcp::2443-:2443,hostfwd=tcp::8080-:8080 \
     -device virtio-net-pci,netdev=net0 \
     -nographic \
-    -serial mon:stdio \
-    -monitor telnet:127.0.0.1:4444,server,nowait \
     -daemonize \
     -pidfile "$QEMU_PID_FILE" \
     > "$QEMU_LOG_FILE" 2>&1
 
 # Wait for QEMU to start
-sleep 5
+sleep 3
 
 # Check if QEMU is running
 if [ -f "$QEMU_PID_FILE" ]; then
@@ -69,16 +72,17 @@ if [ -f "$QEMU_PID_FILE" ]; then
         echo "OpenBMC should be available at:"
         echo "  - HTTPS: https://localhost:2443"
         echo "  - HTTP:  http://localhost:8080"
-        echo "  - Monitor: telnet localhost 4444"
         echo "Log file: $QEMU_LOG_FILE"
         exit 0
     else
         echo "ERROR: QEMU failed to start"
-        cat "$QEMU_LOG_FILE"
+        echo "QEMU log:"
+        cat "$QEMU_LOG_FILE" || echo "No log file found"
         exit 1
     fi
 else
     echo "ERROR: QEMU PID file not created"
-    cat "$QEMU_LOG_FILE"
+    echo "QEMU log:"
+    cat "$QEMU_LOG_FILE" || echo "No log file found"
     exit 1
 fi
