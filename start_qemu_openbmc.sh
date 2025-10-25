@@ -63,7 +63,7 @@ qemu-system-x86_64 \
     -cpu qemu64 \
     -m 1024 \
     -drive file="$DISK_IMAGE",format=raw,if=virtio \
-    -netdev user,id=net0,hostfwd=tcp::2443-:2443,hostfwd=tcp::8080-:8080 \
+    -netdev user,id=net0,hostfwd=tcp::2443-:2443,hostfwd=tcp::8081-:8080 \
     -device virtio-net-pci,netdev=net0 \
     -display none \
     -serial mon:stdio \
@@ -82,7 +82,7 @@ if [ -f "$QEMU_PID_FILE" ]; then
         echo "QEMU started successfully (PID: $QEMU_PID)"
         echo "OpenBMC should be available at:"
         echo "  - HTTPS: https://localhost:2443"
-        echo "  - HTTP:  http://localhost:8080"
+        echo "  - HTTP:  http://localhost:8081"
         echo "Log file: $QEMU_LOG_FILE"
         exit 0
     else
