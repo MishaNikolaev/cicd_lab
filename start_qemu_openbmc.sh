@@ -66,7 +66,7 @@ qemu-system-x86_64 \
     -netdev user,id=net0,hostfwd=tcp::2443-:2443,hostfwd=tcp::8081-:8080 \
     -device virtio-net-pci,netdev=net0 \
     -display none \
-    -serial mon:stdio \
+    -serial file:/tmp/qemu-serial.log \
     -monitor telnet:127.0.0.1:4444,server,nowait \
     -daemonize \
     -pidfile "$QEMU_PID_FILE" \
