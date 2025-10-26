@@ -174,9 +174,7 @@ pipeline {
                     pkill qemu-system-arm || true
                 '''
             }
-        }
-        
-        always {
+            
             publishHTML([
                 allowMissing: false,
                 alwaysLinkToLastBuild: true,
