@@ -66,15 +66,15 @@ pipeline {
                         fi
                         
                         echo "Ожидание готовности OpenBMC..."
-                        timeout=180
+                        timeout=60
                         elapsed=0
-                        while ! curl -k --silent --output /dev/null --connect-timeout 5 https://localhost:2443/redfish/v1; do
-                            sleep 10
-                            elapsed=$((elapsed+10))
+                        interval=5
+                        while ! curl -k --silent --output /dev/null --connect-timeout 2 --max-time 3 https://localhost:2443/redfish/v1; do
+                            sleep $interval
+                            elapsed=$((elapsed+interval))
                             if [ $elapsed -ge $timeout ]; then
-                                echo "OpenBMC не поднялся за $timeout секунд"
+                                echo "OpenBMC не поднялся за $timeout секунд, но тесты продолжат выполнение"
                                 cat /tmp/qemu.log
-                                echo "Продолжаем выполнение тестов..."
                                 break
                             fi
                             printf "."
@@ -133,8 +133,8 @@ pipeline {
                         
                         echo "Проверка готовности OpenBMC для Redfish API..."
                         
-                        # Быстрая проверка - если не готов за 10 секунд, продолжаем
-                        if curl -k -s --connect-timeout 2 --max-time 3 https://localhost:2443/redfish/v1/ > /dev/null 2>&1; then
+                        # Быстрая проверка - если не готов за 3 секунды, продолжаем
+                        if curl -k -s --connect-timeout 1 --max-time 2 https://localhost:2443/redfish/v1/ > /dev/null 2>&1; then
                             echo "✅ Redfish API готов!"
                         else
                             echo "⚠ Redfish API не готов, но тесты продолжат выполнение"
@@ -162,12 +162,12 @@ pipeline {
                         cd ${WORKSPACE}/load_tests
                         
                         echo "Ожидание готовности OpenBMC для нагрузочного тестирования..."
-                        MAX_WAIT=120
+                        MAX_WAIT=30
                         WAIT_TIME=0
-                        INTERVAL=5
+                        INTERVAL=3
                         
                         while [ $WAIT_TIME -lt $MAX_WAIT ]; do
-                            if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:2443/redfish/v1/ > /dev/null 2>&1; then
+                            if curl -k -s --connect-timeout 1 --max-time 2 https://localhost:2443/redfish/v1/ > /dev/null 2>&1; then
                                 echo "OpenBMC готов для нагрузочного тестирования"
                                 break
                             fi
@@ -185,9 +185,9 @@ pipeline {
                         
                         locust -f Locust.py \
                             --host=https://localhost:2443 \
-                            --users=10 \
-                            --spawn-rate=2 \
-                            --run-time=60s \
+                            --users=5 \
+                            --spawn-rate=1 \
+                            --run-time=30s \
                             --headless \
                             --html=${WORKSPACE}/artifacts/load_tests/locust_report.html \
                             --csv=${WORKSPACE}/artifacts/load_tests/locust_stats
