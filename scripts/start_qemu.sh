@@ -20,7 +20,7 @@ nohup qemu-system-arm \
     -M romulus-bmc \
     -nographic \
     -drive file=obmc-phosphor-image-romulus-20250902012112.static.mtd,format=raw,if=mtd \
-    -net user,hostfwd=tcp::2443-:443,hostfwd=tcp::8081-:80 \
+    -net user,hostfwd=tcp::8443-:443,hostfwd=tcp::8082-:80 \
     -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
     > "$QEMU_LOG" 2>&1 &
 
@@ -35,12 +35,12 @@ WAIT_TIME=0
 INTERVAL=10
 
 while [ $WAIT_TIME -lt $MAX_WAIT ]; do
-    if curl -k -s https://localhost:2443 > /dev/null 2>&1; then
-        echo "OpenBMC успешно запущен и доступен на https://localhost:2443"
+    if curl -k -s https://localhost:8443 > /dev/null 2>&1; then
+        echo "OpenBMC успешно запущен и доступен на https://localhost:8443"
         echo "QEMU PID: $QEMU_PID"
         exit 0
-    elif curl -s http://localhost:8081 > /dev/null 2>&1; then
-        echo "OpenBMC успешно запущен и доступен на http://localhost:8081"
+    elif curl -s http://localhost:8082 > /dev/null 2>&1; then
+        echo "OpenBMC успешно запущен и доступен на http://localhost:8082"
         echo "QEMU PID: $QEMU_PID"
         exit 0
     fi

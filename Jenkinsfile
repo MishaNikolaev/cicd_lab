@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        BMC_URL = 'https://localhost:2443'
+        BMC_URL = 'https://localhost:8443'
         BMC_USERNAME = 'root'
         BMC_PASSWORD = '0penBmc'
         WORKSPACE_DIR = '/var/jenkins_home/workspace'
