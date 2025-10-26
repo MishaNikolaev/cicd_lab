@@ -45,19 +45,35 @@ pipeline {
                         echo "Запуск QEMU..."
                         ${WORKSPACE}/scripts/start_qemu.sh
                         
-                        echo "Ожидание запуска сетевых сервисов OpenBMC..."
-                        sleep 30
+                        echo "Ожидание полной загрузки OpenBMC..."
+                        sleep 60
                         
                         echo "Проверка доступности OpenBMC..."
-                        for i in {1..6}; do
-                            if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
-                                echo "✓ OpenBMC доступен на https://localhost:8443"
+                        for i in {1..12}; do
+                            echo "Попытка $i/12: проверка доступности OpenBMC..."
+                            
+                            # Проверяем HTTP порт
+                            if curl -s --connect-timeout 5 --max-time 10 http://localhost:8082/ > /dev/null 2>&1; then
+                                echo "✓ OpenBMC доступен на HTTP http://localhost:8082"
                                 break
-                            else
-                                echo "Попытка $i/6: OpenBMC еще не готов, ждем 10 секунд..."
-                                sleep 10
                             fi
+                            
+                            # Проверяем HTTPS порт
+                            if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
+                                echo "✓ OpenBMC доступен на HTTPS https://localhost:8443"
+                                break
+                            fi
+                            
+                            echo "OpenBMC еще не готов, ждем 15 секунд..."
+                            sleep 15
                         done
+                        
+                        echo "Финальная проверка доступности OpenBMC..."
+                        if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
+                            echo "✓ OpenBMC готов к тестированию!"
+                        else
+                            echo "⚠ OpenBMC может быть еще не готов, но тесты продолжат выполнение"
+                        fi
                     '''
                 }
             }
