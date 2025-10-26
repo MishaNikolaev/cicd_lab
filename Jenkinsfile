@@ -113,6 +113,27 @@ pipeline {
                     sh '''
                         cd ${WORKSPACE}/redfish_api_tests
                         
+                        # Ожидание готовности OpenBMC
+                        echo "Ожидание готовности OpenBMC для Redfish API..."
+                        MAX_WAIT=120
+                        WAIT_TIME=0
+                        INTERVAL=5
+                        
+                        while [ $WAIT_TIME -lt $MAX_WAIT ]; do
+                            if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
+                                echo "✅ OpenBMC готов для Redfish API тестов"
+                                break
+                            fi
+                            
+                            echo "Ожидание готовности OpenBMC... ($WAIT_TIME/$MAX_WAIT секунд)"
+                            sleep $INTERVAL
+                            WAIT_TIME=$((WAIT_TIME + INTERVAL))
+                        done
+                        
+                        if [ $WAIT_TIME -ge $MAX_WAIT ]; then
+                            echo "⚠ OpenBMC не готов, но тесты продолжат выполнение"
+                        fi
+                        
                         # Установка зависимостей
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
@@ -134,6 +155,27 @@ pipeline {
                     
                     sh '''
                         cd ${WORKSPACE}/load_tests
+                        
+                        # Ожидание готовности OpenBMC
+                        echo "Ожидание готовности OpenBMC для нагрузочного тестирования..."
+                        MAX_WAIT=120
+                        WAIT_TIME=0
+                        INTERVAL=5
+                        
+                        while [ $WAIT_TIME -lt $MAX_WAIT ]; do
+                            if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
+                                echo "✅ OpenBMC готов для нагрузочного тестирования"
+                                break
+                            fi
+                            
+                            echo "Ожидание готовности OpenBMC... ($WAIT_TIME/$MAX_WAIT секунд)"
+                            sleep $INTERVAL
+                            WAIT_TIME=$((WAIT_TIME + INTERVAL))
+                        done
+                        
+                        if [ $WAIT_TIME -ge $MAX_WAIT ]; then
+                            echo "⚠ OpenBMC не готов, но тесты продолжат выполнение"
+                        fi
                         
                         # Установка зависимостей
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true

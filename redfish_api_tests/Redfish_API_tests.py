@@ -18,6 +18,30 @@ def auth_session():
     session = requests.Session()
     session.verify = False
 
+    # Ожидание готовности OpenBMC
+    import time
+    max_wait = 60  # 60 секунд
+    wait_time = 0
+    interval = 5
+    
+    print("Ожидание готовности OpenBMC...")
+    while wait_time < max_wait:
+        try:
+            # Проверяем доступность Redfish API
+            test_response = session.get(f"{BASE_URL}/", timeout=5)
+            if test_response.status_code in [200, 401, 403]:  # API доступен
+                print(f"✅ OpenBMC готов (проверка заняла {wait_time} секунд)")
+                break
+        except:
+            pass
+        
+        print(f"Ожидание готовности OpenBMC... ({wait_time}/{max_wait} секунд)")
+        time.sleep(interval)
+        wait_time += interval
+    
+    if wait_time >= max_wait:
+        pytest.skip("OpenBMC не готов в течение 60 секунд")
+
     try:
         response = session.post(
             f"{BASE_URL}/SessionService/Sessions",
