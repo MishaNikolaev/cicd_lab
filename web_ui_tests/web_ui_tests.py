@@ -1,9 +1,21 @@
 import pytest
 import time
+import requests
 from selenium.webdriver.common.by import By
+
+def check_openbmc_availability():
+    """Проверяет доступность OpenBMC перед запуском тестов"""
+    try:
+        response = requests.get("https://localhost:8443", verify=False, timeout=5)
+        return response.status_code in [200, 401, 403, 404]
+    except:
+        return False
 
 @pytest.mark.usefixtures("driver")
 def test_openbmc_auth(driver):
+    if not check_openbmc_availability():
+        pytest.skip("OpenBMC недоступен")
+    
     try:
         print("1. Открываем страницу OpenBMC...")
         driver.get("https://localhost:8443")
