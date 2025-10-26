@@ -138,7 +138,7 @@ pipeline {
                             --html=${WORKSPACE}/artifacts/redfish_tests/report.html \
                             --self-contained-html \
                             --junitxml=${WORKSPACE}/artifacts/redfish_tests/junit.xml \
-                            -v --tb=short --timeout=30
+                            -v --tb=short
                     '''
                 }
             }
