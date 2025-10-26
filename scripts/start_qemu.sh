@@ -30,13 +30,17 @@ echo "QEMU запущен с PID: $QEMU_PID"
 echo "$QEMU_PID" > /tmp/qemu.pid
 
 echo "Ожидание запуска OpenBMC..."
-MAX_WAIT=30
+MAX_WAIT=120
 WAIT_TIME=0
 INTERVAL=10
 
 while [ $WAIT_TIME -lt $MAX_WAIT ]; do
     if curl -k -s https://localhost:2443 > /dev/null 2>&1; then
         echo "OpenBMC успешно запущен и доступен на https://localhost:2443"
+        echo "QEMU PID: $QEMU_PID"
+        exit 0
+    elif curl -s http://localhost:8081 > /dev/null 2>&1; then
+        echo "OpenBMC успешно запущен и доступен на http://localhost:8081"
         echo "QEMU PID: $QEMU_PID"
         exit 0
     fi
