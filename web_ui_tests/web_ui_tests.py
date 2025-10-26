@@ -12,10 +12,7 @@ def check_openbmc_availability():
 
 @pytest.mark.usefixtures("driver")
 def test_openbmc_auth(driver):
-    # Убираем проверку доступности - тест должен выполняться всегда
-    # if not check_openbmc_availability():
-    #     pytest.skip("OpenBMC недоступен")
-    
+
     try:
         print("1. Открываем страницу OpenBMC...")
         driver.get("https://localhost:8443")
@@ -74,7 +71,6 @@ def test_openbmc_auth(driver):
         current_url = driver.current_url
         print(f"Текущий URL: {current_url}")
 
-        # Проверяем результат авторизации
         if current_url != "https://localhost:8443/#/login":
             print("Авторизация удалась! URL изменился")
             print("Тест пройден: Пользователь успешно вошел в систему")
@@ -96,7 +92,6 @@ def test_openbmc_auth(driver):
                 print("Тест не пройден: Не удалось войти в систему")
                 result = False
         
-        # Используем assert для реальной проверки
         assert result, "Тест авторизации не пройден"
 
         screenshot_name = "test1_success.png" if result else "test1_failed.png"
@@ -203,7 +198,6 @@ def test_block_account(driver):
             print(f"ТЕСТ НЕ ПРОЙДЕН: {e}")
             result = False
         
-        # Используем assert для реальной проверки
         assert result, "Тест блокировки учетной записи не пройден"
 
         block_messages = ["Account locked", "Account blocked", "Too many attempts", "locked", "blocked"]
@@ -277,7 +271,6 @@ def test_fans_temp(driver):
             print("РЕЗУЛЬТАТ: Информация о температуре не найдена")
             result = False
         
-        # Используем assert для реальной проверки
         assert result, "Тест температурных датчиков не пройден"
 
         screenshot_name = "test4_success.png" if result else "test4_failed.png"

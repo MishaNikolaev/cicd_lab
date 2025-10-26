@@ -7,7 +7,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 BASE_URL = "https://localhost:8443/redfish/v1"
 USERNAME = "root"
 PASSWORD = "0penBmc"
-TIMEOUT = 60
+TIMEOUT = 300  # Увеличиваем таймаут до 5 минут
 
 AUTH_TOKEN = None
 
@@ -19,16 +19,26 @@ def auth_session():
     session.verify = False
 
     import time
-    max_wait = 60
+    max_wait = 300  # Увеличиваем до 5 минут
     wait_time = 0
-    interval = 5
+    interval = 10  # Увеличиваем интервал до 10 секунд
     
     print("Ожидание готовности OpenBMC...")
     while wait_time < max_wait:
         try:
-            test_response = session.get(f"{BASE_URL}/", timeout=5)
+            # Проверяем основной эндпоинт Redfish API
+            test_response = session.get(f"{BASE_URL}/", timeout=10)
             if test_response.status_code in [200, 401, 403]:
-                print(f"OpenBMC готов (проверка заняла {wait_time} секунд)")
+                print(f"Redfish API готов (проверка заняла {wait_time} секунд)")
+                break
+        except:
+            pass
+        
+        # Дополнительная проверка - пробуем получить системную информацию
+        try:
+            systems_response = session.get(f"{BASE_URL}/Systems/", timeout=10)
+            if systems_response.status_code in [200, 401, 403]:
+                print(f"Redfish Systems API готов (проверка заняла {wait_time} секунд)")
                 break
         except:
             pass
@@ -38,7 +48,7 @@ def auth_session():
         wait_time += interval
     
     if wait_time >= max_wait:
-        print("⚠ OpenBMC не готов в течение 60 секунд, но тесты продолжат выполнение")
+        print("⚠ OpenBMC не готов в течение 300 секунд, но тесты продолжат выполнение")
 
     try:
         response = session.post(
@@ -50,11 +60,11 @@ def auth_session():
         if response.status_code == 201:
             AUTH_TOKEN = response.headers['X-Auth-Token']
             session.headers['X-Auth-Token'] = AUTH_TOKEN
-            print("✅ Успешная аутентификация в Redfish API")
+            print("Успешная аутентификация в Redfish API")
         else:
-            print(f"⚠ Не удалось создать сессию: {response.status_code}")
+            print(f"Не удалось создать сессию: {response.status_code}")
     except requests.exceptions.RequestException as e:
-        print(f"⚠ OpenBMC недоступен: {e}")
+        print(f"OpenBMC недоступен: {e}")
 
     yield session
 
@@ -77,10 +87,9 @@ class TestRedfishAPI:
         try:
             response = auth_session.get(f"{BASE_URL}/", timeout=TIMEOUT)
             assert response.status_code in [200, 401, 403], f"Ожидался статус 200, 401 или 403, получен {response.status_code}"
-            print(f"✅ Redfish API доступен, статус: {response.status_code}")
+            print(f"Redfish API доступен, статус: {response.status_code}")
         except Exception as e:
             print(f"⚠ Redfish API недоступен: {e}")
-            # Не пропускаем тест, а делаем его неуспешным
             assert False, f"Redfish API недоступен: {e}"
 
     def test_02_system_info(self, auth_session, system_info):
@@ -96,7 +105,7 @@ class TestRedfishAPI:
     def test_03_power_management(self, auth_session, system_info):
         try:
             if "Actions" not in system_info or "#ComputerSystem.Reset" not in system_info["Actions"]:
-                print("⚠ Действие Reset недоступно")
+                print("Действие Reset недоступно")
                 assert False, "Действие Reset недоступно"
             for reset_type in ["GracefulRestart", "ForceRestart"]:
                 resp = auth_session.post(
@@ -115,12 +124,12 @@ class TestRedfishAPI:
             thermal_url = f"{BASE_URL}/Chassis/chassis/ThermalSubSystem"
             resp = auth_session.get(thermal_url, timeout=TIMEOUT)
             if resp.status_code != 200:
-                print("⚠ Thermal endpoint недоступен")
+                print("Thermal endpoint недоступен")
                 assert False, "Thermal endpoint недоступен"
             data = resp.json()
             temperatures = data.get("Temperatures", [])
             if not temperatures:
-                print("⚠ Температурные датчики не найдены")
+                print("Температурные датчики не найдены")
                 assert False, "Температурные датчики не найдены"
             for sensor in temperatures:
                 temp = sensor.get("ReadingCelsius")
@@ -134,7 +143,7 @@ class TestRedfishAPI:
                     assert -20 <= temp <= 120, f"Температура {temp} вне допустимого диапазона"
             print("Температурные датчики работают корректно")
         except Exception as e:
-            print(f"⚠ Ошибка в температурных датчиках: {e}")
+            print(f"Ошибка в температурных датчиках: {e}")
             assert False, f"Ошибка в температурных датчиках: {e}"
 
     def test_05_cpu_sensors_consistency(self, auth_session):
@@ -143,7 +152,7 @@ class TestRedfishAPI:
             assert resp.status_code == 200, f"Ожидался статус 200, получен {resp.status_code}"
             print("Системная информация доступна")
         except Exception as e:
-            print(f"⚠ Ошибка при получении системной информации: {e}")
+            print(f"Ошибка при получении системной информации: {e}")
             assert False, f"Ошибка при получении системной информации: {e}"
 
     def test_06_session_management(self, auth_session):
@@ -152,5 +161,5 @@ class TestRedfishAPI:
             assert resp.status_code == 200, f"Ожидался статус 200, получен {resp.status_code}"
             print("Сервис сессий работает корректно")
         except Exception as e:
-            print(f"⚠ Ошибка в управлении сессиями: {e}")
+            print(f"Ошибка в управлении сессиями: {e}")
             assert False, f"Ошибка в управлении сессиями: {e}"

@@ -27,7 +27,6 @@ services:
         apt-get install -y chromium xvfb chromium-driver &&
         apt-get install -y build-essential libssl-dev libffi-dev python3-dev &&
         
-        # Создаем симлинк для chromedriver
         ln -sf /usr/bin/chromedriver /usr/local/bin/chromedriver &&
         
         pip3 install selenium pytest requests urllib3 locust --break-system-packages &&
@@ -44,7 +43,6 @@ services:
         
         mkdir -p /var/jenkins_home/plugins &&
         
-        # Создаем директории для результатов тестов
         mkdir -p /var/jenkins_home/workspace/artifacts/web_ui_tests &&
         mkdir -p /var/jenkins_home/workspace/artifacts/redfish_tests &&
         mkdir -p /var/jenkins_home/workspace/artifacts/load_tests &&

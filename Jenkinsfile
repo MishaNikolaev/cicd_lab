@@ -33,12 +33,10 @@ pipeline {
                     echo "=== Запуск QEMU с OpenBMC ==="
                     
                     sh '''
-                        # Остановка предыдущих экземпляров QEMU
                         pkill qemu-system-arm || true
                         rm -f /tmp/qemu.pid
                         sleep 2
                         
-                        # Переход в директорию с образом
                         cd ${WORKSPACE}/romulus
                         
                         if [ ! -f "obmc-phosphor-image-romulus-20250902012112.static.mtd" ]; then
@@ -48,7 +46,6 @@ pipeline {
                         
                         echo "MTD файл найден: obmc-phosphor-image-romulus-20250902012112.static.mtd"
                         
-                        # Запуск QEMU с правильными параметрами
                         echo "Запуск QEMU..."
                         nohup qemu-system-arm \
                             -M romulus-bmc \
@@ -61,7 +58,6 @@ pipeline {
                         echo "QEMU запущен с PID: $QEMU_PID"
                         echo "$QEMU_PID" > /tmp/qemu.pid
                         
-                        # Проверка что QEMU запустился
                         sleep 5
                         if ! ps -p $QEMU_PID > /dev/null; then
                             echo "QEMU не запущен!"
@@ -108,7 +104,6 @@ pipeline {
                         
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
-                        # Запускаем тесты с реальными проверками
                         pytest web_ui_tests.py \
                             --html=${WORKSPACE}/artifacts/web_ui_tests/report.html \
                             --self-contained-html \
@@ -137,13 +132,20 @@ pipeline {
                         cd ${WORKSPACE}/redfish_api_tests
                         
                         echo "Ожидание готовности OpenBMC для Redfish API..."
-                        MAX_WAIT=120
+                        MAX_WAIT=300
                         WAIT_TIME=0
-                        INTERVAL=5
+                        INTERVAL=10
                         
                         while [ $WAIT_TIME -lt $MAX_WAIT ]; do
+                            # Проверяем разные эндпоинты Redfish API
                             if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
-                                echo "OpenBMC готов для Redfish API тестов"
+                                echo "Redfish API готов!"
+                                break
+                            fi
+                            
+                            # Дополнительная проверка - пробуем получить системную информацию
+                            if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/Systems/ > /dev/null 2>&1; then
+                                echo "Redfish Systems API готов!"
                                 break
                             fi
                             
@@ -153,7 +155,10 @@ pipeline {
                         done
                         
                         if [ $WAIT_TIME -ge $MAX_WAIT ]; then
-                            echo "⚠ OpenBMC не готов, но тесты продолжат выполнение"
+                            echo "⚠ OpenBMC не готов за $MAX_WAIT секунд, но тесты продолжат выполнение"
+                            echo "Проверяем доступность основных сервисов:"
+                            curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/ || echo "HTTPS недоступен"
+                            curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ || echo "Redfish API недоступен"
                         fi
                         
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
