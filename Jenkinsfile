@@ -35,22 +35,43 @@ pipeline {
                     echo "=== Запуск QEMU с OpenBMC ==="
                     
                     sh '''
-                        if [ -f ${QEMU_PID_FILE} ]; then
-                            echo "Остановка предыдущего экземпляра QEMU..."
-                            ${WORKSPACE}/scripts/stop_qemu.sh || true
-                        fi
-                    '''
-                    
-                    sh '''
-                        echo "Запуск QEMU..."
-                        ${WORKSPACE}/scripts/start_qemu.sh
-                    '''
-                    
-                    sh '''
-                        echo "Ожидание полной загрузки OpenBMC..."
-                        sleep 60
+                        # Остановка предыдущих экземпляров QEMU
+                        pkill qemu-system-arm || true
+                        rm -f /tmp/qemu.pid
+                        sleep 2
                         
-                        echo "Проверка доступности OpenBMC..."
+                        # Переход в директорию с образом
+                        cd ${WORKSPACE}/romulus
+                        
+                        if [ ! -f "obmc-phosphor-image-romulus-20250902012112.static.mtd" ]; then
+                            echo "ОШИБКА: MTD файл не найден!"
+                            exit 1
+                        fi
+                        
+                        echo "MTD файл найден: obmc-phosphor-image-romulus-20250902012112.static.mtd"
+                        
+                        # Запуск QEMU с правильными параметрами
+                        echo "Запуск QEMU..."
+                        nohup qemu-system-arm \
+                            -M romulus-bmc \
+                            -nographic \
+                            -drive file=obmc-phosphor-image-romulus-20250902012112.static.mtd,format=raw,if=mtd \
+                            -net user,hostfwd=tcp::8443-:443,hostfwd=tcp::8082-:80 \
+                            > /tmp/qemu.log 2>&1 &
+                        
+                        QEMU_PID=$!
+                        echo "QEMU запущен с PID: $QEMU_PID"
+                        echo "$QEMU_PID" > /tmp/qemu.pid
+                        
+                        # Проверка что QEMU запустился
+                        sleep 5
+                        if ! ps -p $QEMU_PID > /dev/null; then
+                            echo "QEMU не запущен!"
+                            cat /tmp/qemu.log
+                            exit 1
+                        fi
+                        
+                        echo "Ожидание готовности OpenBMC..."
                         timeout=180
                         elapsed=0
                         while ! curl -k --silent --output /dev/null --connect-timeout 5 https://localhost:8443/redfish/v1; do
@@ -226,7 +247,11 @@ EOF
             script {
                 echo "=== Остановка QEMU ==="
                 sh '''
-                    ${WORKSPACE}/scripts/stop_qemu.sh || true
+                    if [ -f /tmp/qemu.pid ]; then
+                        kill $(cat /tmp/qemu.pid) || true
+                        rm -f /tmp/qemu.pid
+                    fi
+                    pkill qemu-system-arm || true
                 '''
             }
             

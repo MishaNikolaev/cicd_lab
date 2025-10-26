@@ -16,7 +16,6 @@ services:
       - ./redfish_api_tests:/var/jenkins_home/workspace/redfish_api_tests
       - ./load_tests:/var/jenkins_home/workspace/load_tests
       - ./chromedriver:/var/jenkins_home/workspace/chromedriver
-      - ./scripts:/var/jenkins_home/workspace/scripts
       - ./jenkins_ssh:/var/jenkins_home/.ssh
     environment:
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
