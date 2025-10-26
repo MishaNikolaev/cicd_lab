@@ -45,12 +45,6 @@ pipeline {
                         echo "Запуск QEMU..."
                         ${WORKSPACE}/scripts/start_qemu.sh
                     '''
-                    
-                    sh '''
-                        echo "Ожидание запуска OpenBMC..."
-                        timeout 300 bash -c 'until curl -k -s https://localhost:2443 > /dev/null 2>&1; do sleep 10; done'
-                        echo "OpenBMC запущен и доступен"
-                    '''
                 }
             }
             post {
