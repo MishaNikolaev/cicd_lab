@@ -22,8 +22,6 @@ pipeline {
                         mkdir -p ${WORKSPACE}/artifacts/qemu_logs
                     '''
                     
-                    sh 'chmod +x ${WORKSPACE}/scripts/*.sh'
-                    
                     echo "Окружение подготовлено"
                 }
             }
