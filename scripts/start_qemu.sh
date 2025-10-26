@@ -27,7 +27,7 @@ nohup qemu-system-arm \
     -M romulus-bmc \
     -nographic \
     -drive file=obmc-phosphor-image-romulus-20250902012112.static.mtd,format=raw,if=mtd \
-    -netdev user,id=net0,hostfwd=tcp::2443-:443,hostfwd=tcp::8080-:80 \
+    -netdev user,id=net0,hostfwd=tcp::2443-:443,hostfwd=tcp::8081-:80 \
     -device virtio-net-device,netdev=net0 \
     -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
     > "$QEMU_LOG" 2>&1 &

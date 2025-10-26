@@ -207,7 +207,6 @@ EOF
                 reportName: 'OpenBMC Test Report'
             ])
             
-            // Публикация JUnit отчетов
             publishTestResults testResultsPattern: 'artifacts/**/junit.xml'
         }
         
