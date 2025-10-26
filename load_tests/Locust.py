@@ -7,26 +7,22 @@ class OpenBMCUser(HttpUser):
 
     def on_start(self):
         import time
-        max_wait = 10  # Максимум 10 секунд ожидания
+        max_wait = 10
         wait_time = 0
         interval = 1
         
-        print("Быстрая проверка готовности OpenBMC для нагрузочного тестирования...")
         while wait_time < max_wait:
             try:
                 test_response = self.client.get("/redfish/v1/", verify=False, timeout=1)
                 if test_response.status_code in [200, 401, 403]:
-                    print(f"OpenBMC готов для нагрузочного тестирования (проверка заняла {wait_time} секунд)")
                     break
             except:
                 pass
             
-            print(f"Ожидание готовности OpenBMC... ({wait_time}/{max_wait} секунд)")
             time.sleep(interval)
             wait_time += interval
         
         if wait_time >= max_wait:
-            print("OpenBMC не готов, завершение нагрузочного тестирования")
             self.environment.runner.quit()
             return
         
@@ -42,13 +38,8 @@ class OpenBMCUser(HttpUser):
                 token = auth_response.headers.get("X-Auth-Token")
                 if token:
                     self.client.headers["X-Auth-Token"] = token
-                    print(f"Успешная аутентификация, токен получен")
-                else:
-                    print("Ошибка: токен не получен")
-            else:
-                print(f"Ошибка аутентификации: {auth_response.status_code}")
         except Exception as e:
-            print(f"Ошибка подключения к OpenBMC: {e}")
+            pass
 
     @task(3)
     def get_system_info(self):
@@ -84,7 +75,6 @@ class OpenBMCUser(HttpUser):
                     power_state = system_data.get("PowerState")
                     if power_state:
                         response.success()
-                        print(f"PowerState: {power_state}")
                     else:
                         response.failure("PowerState отсутствует в ответе")
                 except ValueError:
