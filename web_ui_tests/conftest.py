@@ -44,8 +44,9 @@ def driver():
     chrome_options.add_argument("--disable-web-security")
     
     try:
-        # Используем системный Chrome с wrapper
-        driver = webdriver.Chrome(options=chrome_options)
+        # Используем установленный ChromeDriver
+        service = Service("/usr/local/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=chrome_options)
     except Exception as e:
         print(f"Ошибка при создании WebDriver: {e}")
         pytest.skip("WebDriver недоступен")

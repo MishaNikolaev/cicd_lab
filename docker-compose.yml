@@ -25,8 +25,11 @@ services:
       bash -c "
         apt-get update && 
         apt-get install -y python3 python3-pip python3-venv python3-full curl wget git openssh-client qemu-system-arm qemu-utils &&
-        apt-get install -y chromium xvfb &&
+        apt-get install -y chromium xvfb chromium-driver &&
         apt-get install -y build-essential libssl-dev libffi-dev python3-dev &&
+        
+        # Создаем симлинк для chromedriver
+        ln -sf /usr/bin/chromedriver /usr/local/bin/chromedriver &&
         
         pip3 install selenium pytest requests urllib3 locust --break-system-packages &&
         pip3 install webdriver-manager pytest-html pytest-xvfb --break-system-packages &&
