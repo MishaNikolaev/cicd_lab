@@ -7,7 +7,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 BASE_URL = "https://localhost:8443/redfish/v1"
 USERNAME = "root"
 PASSWORD = "0penBmc"
-TIMEOUT = 300  # Увеличиваем таймаут до 5 минут
+TIMEOUT = 100
 
 AUTH_TOKEN = None
 
@@ -19,16 +19,16 @@ def auth_session():
     session.verify = False
 
     import time
-    max_wait = 30  # Быстрая проверка - 30 секунд
+    max_wait = 30
     wait_time = 0
-    interval = 5  # Уменьшаем интервал до 5 секунд  
+    interval = 5
     
     print("Быстрая проверка готовности OpenBMC...")
     while wait_time < max_wait:
         try:
             test_response = session.get(f"{BASE_URL}/", timeout=10)
             if test_response.status_code in [200, 401, 403]:
-                print(f"✅ Redfish API готов (проверка заняла {wait_time} секунд)")
+                print(f"Redfish API готов (проверка заняла {wait_time} секунд)")
                 break
         except:
             pass
@@ -36,7 +36,7 @@ def auth_session():
         try:
             systems_response = session.get(f"{BASE_URL}/Systems/", timeout=10)
             if systems_response.status_code in [200, 401, 403]:
-                print(f"✅ Redfish Systems API готов (проверка заняла {wait_time} секунд)")
+                print(f"Redfish Systems API готов (проверка заняла {wait_time} секунд)")
                 break
         except:
             pass
@@ -46,8 +46,7 @@ def auth_session():
         wait_time += interval
     
     if wait_time >= max_wait:
-        print("⚠ OpenBMC не готов за 30 секунд, но тесты продолжат выполнение")
-        print("Это нормально для демонстрации CI/CD pipeline")
+        print("OpenBMC не готов за 30 секунд, но тесты продолжат выполнение")
 
     try:
         response = session.post(
