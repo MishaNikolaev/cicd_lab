@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 
 def check_openbmc_availability():
     try:
-        response = requests.get("https://localhost:8443", verify=False, timeout=5)
+        response = requests.get("https://localhost:2443", verify=False, timeout=5)
         return response.status_code in [200, 401, 403, 404]
     except:
         return False
@@ -15,7 +15,7 @@ def test_openbmc_auth(driver):
 
     try:
         print("1. Открываем страницу OpenBMC...")
-        driver.get("https://localhost:8443")
+        driver.get("https://localhost:2443")
         time.sleep(3)
         print(f"Страница открыта: {driver.current_url}")
         print(f"Заголовок страницы: '{driver.title}'")
@@ -71,7 +71,7 @@ def test_openbmc_auth(driver):
         current_url = driver.current_url
         print(f"Текущий URL: {current_url}")
 
-        if current_url != "https://localhost:8443/#/login":
+        if current_url != "https://localhost:2443/#/login":
             print("Авторизация удалась! URL изменился")
             print("Тест пройден: Пользователь успешно вошел в систему")
             result = True
@@ -110,7 +110,7 @@ print("=== Тест 3: Блокировка учетной записи ===")
 def test_block_account(driver):
     try:
         print("1. Открываем страницу OpenBMC...")
-        driver.get("https://localhost:8443")
+        driver.get("https://localhost:2443")
         time.sleep(5)
         print(f"Страница открыта: {driver.current_url}")
 
@@ -223,7 +223,7 @@ def test_block_account(driver):
 def test_fans_temp(driver):
     try:
         print("1. Выполняем вход в систему...")
-        driver.get("https://localhost:8443")
+        driver.get("https://localhost:2443")
         time.sleep(5)
         inputs = driver.find_elements(By.TAG_NAME, "input")
         for inp in inputs:
@@ -248,7 +248,7 @@ def test_fans_temp(driver):
         print(f"Текущий URL: {driver.current_url}")
 
         print("2. Переходим на страницу Thermal данных...")
-        thermal_url = "https://localhost:8443/redfish/v1/Chassis/chassis/Thermal"
+        thermal_url = "https://localhost:2443/redfish/v1/Chassis/chassis/Thermal"
         driver.get(thermal_url)
         time.sleep(5)
         print(f"Открыта страница: {driver.current_url}")

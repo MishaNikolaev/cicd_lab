@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        BMC_URL = 'https://localhost:8443'
+        BMC_URL = 'https://localhost:2443'
         BMC_USERNAME = 'root'
         BMC_PASSWORD = '0penBmc'
         WORKSPACE_DIR = '/var/jenkins_home/workspace'
@@ -51,7 +51,7 @@ pipeline {
                             -M romulus-bmc \
                             -nographic \
                             -drive file=obmc-phosphor-image-romulus-20250902012112.static.mtd,format=raw,if=mtd \
-                            -net user,hostfwd=tcp::8443-:443,hostfwd=tcp::8082-:80 \
+                            -net user,hostfwd=tcp::2443-:443,hostfwd=tcp::8082-:80 \
                             > /tmp/qemu.log 2>&1 &
                         
                         QEMU_PID=$!
@@ -68,7 +68,7 @@ pipeline {
                         echo "Ожидание готовности OpenBMC..."
                         timeout=180
                         elapsed=0
-                        while ! curl -k --silent --output /dev/null --connect-timeout 5 https://localhost:8443/redfish/v1; do
+                        while ! curl -k --silent --output /dev/null --connect-timeout 5 https://localhost:2443/redfish/v1; do
                             sleep 10
                             elapsed=$((elapsed+10))
                             if [ $elapsed -ge $timeout ]; then
@@ -108,7 +108,7 @@ pipeline {
                             --html=${WORKSPACE}/artifacts/web_ui_tests/report.html \
                             --self-contained-html \
                             --junitxml=${WORKSPACE}/artifacts/web_ui_tests/junit.xml \
-                            -v --tb=short || true
+                            -v --tb=short
                     '''
                 }
             }
@@ -134,7 +134,7 @@ pipeline {
                         echo "Проверка готовности OpenBMC для Redfish API..."
                         
                         # Быстрая проверка - если не готов за 10 секунд, продолжаем
-                        if curl -k -s --connect-timeout 2 --max-time 3 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
+                        if curl -k -s --connect-timeout 2 --max-time 3 https://localhost:2443/redfish/v1/ > /dev/null 2>&1; then
                             echo "✅ Redfish API готов!"
                         else
                             echo "⚠ Redfish API не готов, но тесты продолжат выполнение"
@@ -147,7 +147,7 @@ pipeline {
                             --html=${WORKSPACE}/artifacts/redfish_tests/report.html \
                             --self-contained-html \
                             --junitxml=${WORKSPACE}/artifacts/redfish_tests/junit.xml \
-                            -v --tb=short --timeout=30 || true
+                            -v --tb=short --timeout=30
                     '''
                 }
             }
@@ -167,7 +167,7 @@ pipeline {
                         INTERVAL=5
                         
                         while [ $WAIT_TIME -lt $MAX_WAIT ]; do
-                            if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
+                            if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:2443/redfish/v1/ > /dev/null 2>&1; then
                                 echo "OpenBMC готов для нагрузочного тестирования"
                                 break
                             fi
@@ -184,13 +184,13 @@ pipeline {
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
                         locust -f Locust.py \
-                            --host=https://localhost:8443 \
+                            --host=https://localhost:2443 \
                             --users=10 \
                             --spawn-rate=2 \
                             --run-time=60s \
                             --headless \
                             --html=${WORKSPACE}/artifacts/load_tests/locust_report.html \
-                            --csv=${WORKSPACE}/artifacts/load_tests/locust_stats || true
+                            --csv=${WORKSPACE}/artifacts/load_tests/locust_stats
                     '''
                 }
             }
