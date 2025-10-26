@@ -21,7 +21,7 @@ nohup qemu-system-arm \
     -nographic \
     -drive file=obmc-phosphor-image-romulus-20250902012112.static.mtd,format=raw,if=mtd \
     -netdev user,id=net0,hostfwd=tcp::2443-:443,hostfwd=tcp::8081-:80 \
-    -device lan9118,netdev=net0 \
+    -device pcnet,netdev=net0 \
     -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
     > "$QEMU_LOG" 2>&1 &
 
@@ -31,7 +31,7 @@ echo "QEMU запущен с PID: $QEMU_PID"
 echo "$QEMU_PID" > /tmp/qemu.pid
 
 echo "Ожидание запуска OpenBMC..."
-MAX_WAIT=100
+MAX_WAIT=60
 WAIT_TIME=0
 INTERVAL=10
 
