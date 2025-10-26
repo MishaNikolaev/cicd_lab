@@ -17,10 +17,11 @@ QEMU_LOG="/tmp/qemu.log"
 
 echo "Запуск QEMU..."
 nohup qemu-system-arm \
-    -M romulus-bmc \
+    -M witherspoon-bmc \
     -nographic \
     -drive file=obmc-phosphor-image-romulus-20250902012112.static.mtd,format=raw,if=mtd \
-    -net user,hostfwd=tcp::8443-:443,hostfwd=tcp::8082-:80 \
+    -netdev user,id=net0,hostfwd=tcp::8443-:443,hostfwd=tcp::8082-:80 \
+    -device vhost-vsock-device,guest-cid=3 \
     -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
     > "$QEMU_LOG" 2>&1 &
 

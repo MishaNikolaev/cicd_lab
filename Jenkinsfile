@@ -48,7 +48,7 @@ pipeline {
                     
                     sh '''
                         echo "Ожидание полной загрузки OpenBMC..."
-                        sleep 60
+                        sleep 120
                         
                         echo "Проверка доступности OpenBMC..."
                         echo "Попытка {1..12}/12: проверка доступности OpenBMC..."
