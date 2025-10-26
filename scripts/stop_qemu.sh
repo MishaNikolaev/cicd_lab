@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Скрипт для остановки QEMU
-# Используется в Jenkins pipeline
-
 echo "=== Остановка QEMU ==="
 
 PID_FILE="/tmp/qemu.pid"
@@ -15,7 +12,6 @@ if [ -f "$PID_FILE" ]; then
         echo "Завершение процесса QEMU..."
         kill -TERM "$QEMU_PID"
         
-        # Ждем завершения процесса
         sleep 5
         
         if ps -p "$QEMU_PID" > /dev/null 2>&1; then

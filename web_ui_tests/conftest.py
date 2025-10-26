@@ -8,7 +8,6 @@ import os
 
 @pytest.fixture(scope="session")
 def driver():
-    """Фикстура для настройки WebDriver"""
     chrome_options = Options()
     
     chrome_options.add_argument("--headless")

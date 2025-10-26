@@ -198,7 +198,7 @@ EOF
                 reportName: 'OpenBMC Test Report'
             ])
             
-            junit testResults: 'artifacts/**/junit.xml'
+            junit testResults: 'artifacts/**/junit.xml', allowEmptyResults: true
         }
         
         success {
