@@ -44,6 +44,20 @@ pipeline {
                     sh '''
                         echo "Запуск QEMU..."
                         ${WORKSPACE}/scripts/start_qemu.sh
+                        
+                        echo "Ожидание запуска сетевых сервисов OpenBMC..."
+                        sleep 30
+                        
+                        echo "Проверка доступности OpenBMC..."
+                        for i in {1..6}; do
+                            if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
+                                echo "✓ OpenBMC доступен на https://localhost:8443"
+                                break
+                            else
+                                echo "Попытка $i/6: OpenBMC еще не готов, ждем 10 секунд..."
+                                sleep 10
+                            fi
+                        done
                     '''
                 }
             }
@@ -124,7 +138,7 @@ pipeline {
                         
                         # Запуск Locust тестов
                         locust -f Locust.py \
-                            --host=https://localhost:2443 \
+                            --host=https://localhost:8443 \
                             --users=10 \
                             --spawn-rate=2 \
                             --run-time=60s \
