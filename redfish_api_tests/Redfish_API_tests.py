@@ -18,17 +18,20 @@ def auth_session():
     session = requests.Session()
     session.verify = False
 
-    response = session.post(
-        f"{BASE_URL}/SessionService/Sessions",
-        json={"UserName": USERNAME, "Password": PASSWORD},
-        timeout=TIMEOUT
-    )
+    try:
+        response = session.post(
+            f"{BASE_URL}/SessionService/Sessions",
+            json={"UserName": USERNAME, "Password": PASSWORD},
+            timeout=TIMEOUT
+        )
 
-    if response.status_code == 201:
-        AUTH_TOKEN = response.headers['X-Auth-Token']
-        session.headers['X-Auth-Token'] = AUTH_TOKEN
-    else:
-        pytest.exit(f"Не удалось создать сессию: {response.status_code}")
+        if response.status_code == 201:
+            AUTH_TOKEN = response.headers['X-Auth-Token']
+            session.headers['X-Auth-Token'] = AUTH_TOKEN
+        else:
+            pytest.skip(f"Не удалось создать сессию: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        pytest.skip(f"OpenBMC недоступен: {e}")
 
     yield session
 

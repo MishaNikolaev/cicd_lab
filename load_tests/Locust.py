@@ -6,22 +6,25 @@ class OpenBMCUser(HttpUser):
     wait_time = between(2, 5)
 
     def on_start(self):
+        try:
+            auth_response = self.client.post(
+                "/redfish/v1/SessionService/Sessions",
+                json={"UserName": "root", "Password": "0penBmc"},
+                verify=False,
+                timeout=10
+            )
 
-        auth_response = self.client.post(
-            "/redfish/v1/SessionService/Sessions",
-            json={"UserName": "root", "Password": "0penBmc"},
-            verify=False
-        )
-
-        if auth_response.status_code in [200, 201]:
-            token = auth_response.headers.get("X-Auth-Token")
-            if token:
-                self.client.headers["X-Auth-Token"] = token
-                print(f"Успешная аутентификация, токен получен")
+            if auth_response.status_code in [200, 201]:
+                token = auth_response.headers.get("X-Auth-Token")
+                if token:
+                    self.client.headers["X-Auth-Token"] = token
+                    print(f"Успешная аутентификация, токен получен")
+                else:
+                    print("Ошибка: токен не получен")
             else:
-                print("Ошибка: токен не получен")
-        else:
-            print(f"Ошибка аутентификации: {auth_response.status_code}")
+                print(f"Ошибка аутентификации: {auth_response.status_code}")
+        except Exception as e:
+            print(f"Ошибка подключения к OpenBMC: {e}")
 
     @task(3)
     def get_system_info(self):

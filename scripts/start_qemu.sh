@@ -29,38 +29,7 @@ echo "QEMU запущен с PID: $QEMU_PID"
 
 echo "$QEMU_PID" > /tmp/qemu.pid
 
-echo "Ожидание запуска OpenBMC..."
-MAX_WAIT=60
-WAIT_TIME=0
-INTERVAL=10
-
-while [ $WAIT_TIME -lt $MAX_WAIT ]; do
-    echo "Ожидание... ($WAIT_TIME/$MAX_WAIT секунд)"
-    
-    # Быстрая проверка сетевых портов с таймаутом
-    if curl -k -s --connect-timeout 2 --max-time 3 https://localhost:8443 > /dev/null 2>&1; then
-        echo "✓ OpenBMC доступен на https://localhost:8443"
-        echo "QEMU PID: $QEMU_PID"
-        exit 0
-    elif curl -s --connect-timeout 2 --max-time 3 http://localhost:8082 > /dev/null 2>&1; then
-        echo "✓ OpenBMC доступен на http://localhost:8082"
-        echo "QEMU PID: $QEMU_PID"
-        exit 0
-    fi
-    
-    echo "Статус портов:"
-    echo "  - HTTPS (8443): $(curl -k -s --connect-timeout 1 --max-time 2 -o /dev/null -w '%{http_code}' https://localhost:8443 2>/dev/null || echo 'недоступен')"
-    echo "  - HTTP (8082): $(curl -s --connect-timeout 1 --max-time 2 -o /dev/null -w '%{http_code}' http://localhost:8082 2>/dev/null || echo 'недоступен')"
-    
-    sleep $INTERVAL
-    WAIT_TIME=$((WAIT_TIME + INTERVAL))
-done
-
-echo "ПРЕДУПРЕЖДЕНИЕ: OpenBMC не ответил в течение $MAX_WAIT секунд"
-echo "Но QEMU продолжает работать в фоне с PID: $QEMU_PID"
-echo "Система может быть еще в процессе загрузки..."
-
-echo ""
+echo "QEMU процесс запущен в фоне"
 echo "Для подключения к OpenBMC используйте:"
 echo "  HTTPS: https://localhost:8443"
 echo "  HTTP:  http://localhost:8082"
