@@ -7,7 +7,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 BASE_URL = "https://localhost:8443/redfish/v1"
 USERNAME = "root"
 PASSWORD = "0penBmc"
-TIMEOUT = 100
+TIMEOUT = 10  # Быстрые тесты - 10 секунд максимум
 
 AUTH_TOKEN = None
 
@@ -26,7 +26,7 @@ def auth_session():
     print("Быстрая проверка готовности OpenBMC...")
     while wait_time < max_wait:
         try:
-            test_response = session.get(f"{BASE_URL}/", timeout=10)
+            test_response = session.get(f"{BASE_URL}/", timeout=3)
             if test_response.status_code in [200, 401, 403]:
                 print(f"Redfish API готов (проверка заняла {wait_time} секунд)")
                 break
@@ -34,7 +34,7 @@ def auth_session():
             pass
         
         try:
-            systems_response = session.get(f"{BASE_URL}/Systems/", timeout=10)
+            systems_response = session.get(f"{BASE_URL}/Systems/", timeout=3)
             if systems_response.status_code in [200, 401, 403]:
                 print(f"Redfish Systems API готов (проверка заняла {wait_time} секунд)")
                 break

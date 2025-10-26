@@ -133,8 +133,8 @@ pipeline {
                         
                         echo "Проверка готовности OpenBMC для Redfish API..."
                         
-                        # Быстрая проверка - если не готов за 30 секунд, продолжаем
-                        if curl -k -s --connect-timeout 3 --max-time 5 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
+                        # Быстрая проверка - если не готов за 10 секунд, продолжаем
+                        if curl -k -s --connect-timeout 2 --max-time 3 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
                             echo "✅ Redfish API готов!"
                         else
                             echo "⚠ Redfish API не готов, но тесты продолжат выполнение"
@@ -147,7 +147,7 @@ pipeline {
                             --html=${WORKSPACE}/artifacts/redfish_tests/report.html \
                             --self-contained-html \
                             --junitxml=${WORKSPACE}/artifacts/redfish_tests/junit.xml \
-                            -v --tb=short || true
+                            -v --tb=short --timeout=30 || true
                     '''
                 }
             }
