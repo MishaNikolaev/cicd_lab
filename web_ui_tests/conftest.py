@@ -45,27 +45,14 @@ def driver():
     
     try:
         if os.path.exists("/var/jenkins_home/workspace/chromedriver/chromedriver"):
-            # Устанавливаем права на выполнение
-            os.chmod("/var/jenkins_home/workspace/chromedriver/chromedriver", 0o755)
             service = Service("/var/jenkins_home/workspace/chromedriver/chromedriver")
             driver = webdriver.Chrome(service=service, options=chrome_options)
         else:
-            # Пытаемся использовать Selenium Manager
-            try:
-                service = Service(ChromeDriverManager().install())
-                driver = webdriver.Chrome(service=service, options=chrome_options)
-            except Exception as e:
-                print(f"Selenium Manager не смог установить chromedriver: {e}")
-                # Fallback: используем системный chromedriver
-                driver = webdriver.Chrome(options=chrome_options)
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=chrome_options)
     except Exception as e:
         print(f"Ошибка при создании WebDriver: {e}")
-        # Последняя попытка: используем системный chromedriver
-        try:
-            driver = webdriver.Chrome(options=chrome_options)
-        except Exception as final_e:
-            print(f"Критическая ошибка: не удалось создать WebDriver: {final_e}")
-            pytest.skip("WebDriver недоступен")
+        driver = webdriver.Chrome(options=chrome_options)
     
     driver.implicitly_wait(10)
     driver.set_page_load_timeout(30)

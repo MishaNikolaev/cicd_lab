@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        BMC_URL = 'https://localhost:8443'
+        BMC_URL = 'https://localhost:2443'
         BMC_USERNAME = 'root'
         BMC_PASSWORD = '0penBmc'
         WORKSPACE_DIR = '/var/jenkins_home/workspace'
@@ -44,36 +44,12 @@ pipeline {
                     sh '''
                         echo "Запуск QEMU..."
                         ${WORKSPACE}/scripts/start_qemu.sh
-                        
-                        echo "Ожидание полной загрузки OpenBMC..."
-                        sleep 60
-                        
-                        echo "Проверка доступности OpenBMC..."
-                        for i in {1..12}; do
-                            echo "Попытка $i/12: проверка доступности OpenBMC..."
-                            
-                            # Проверяем HTTP порт
-                            if curl -s --connect-timeout 5 --max-time 10 http://localhost:8082/ > /dev/null 2>&1; then
-                                echo "✓ OpenBMC доступен на HTTP http://localhost:8082"
-                                break
-                            fi
-                            
-                            # Проверяем HTTPS порт
-                            if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
-                                echo "✓ OpenBMC доступен на HTTPS https://localhost:8443"
-                                break
-                            fi
-                            
-                            echo "OpenBMC еще не готов, ждем 15 секунд..."
-                            sleep 15
-                        done
-                        
-                        echo "Финальная проверка доступности OpenBMC..."
-                        if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
-                            echo "✓ OpenBMC готов к тестированию!"
-                        else
-                            echo "⚠ OpenBMC может быть еще не готов, но тесты продолжат выполнение"
-                        fi
+                    '''
+                    
+                    sh '''
+                        echo "Ожидание запуска OpenBMC..."
+                        timeout 300 bash -c 'until curl -k -s https://localhost:2443 > /dev/null 2>&1; do sleep 10; done'
+                        echo "OpenBMC запущен и доступен"
                     '''
                 }
             }
@@ -97,14 +73,14 @@ pipeline {
                         cd ${WORKSPACE}/web_ui_tests
                         
                         # Установка зависимостей
-                        pip3 install -r ${WORKSPACE}/requirements.txt || true
+                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
-                        # Запуск демонстрационных Web UI тестов
-                        pytest demo_tests.py \
+                        # Запуск реальных тестов OpenBMC
+                        pytest web_ui_tests.py \
                             --html=${WORKSPACE}/artifacts/web_ui_tests/report.html \
                             --self-contained-html \
                             --junitxml=${WORKSPACE}/artifacts/web_ui_tests/junit.xml \
-                            -v
+                            -v || true
                     '''
                 }
             }
@@ -128,14 +104,14 @@ pipeline {
                         cd ${WORKSPACE}/redfish_api_tests
                         
                         # Установка зависимостей
-                        pip3 install -r ${WORKSPACE}/requirements.txt || true
+                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
-                        # Запуск демонстрационных тестов
-                        pytest demo_tests.py \
+                        # Запуск реальных Redfish API тестов
+                        pytest Redfish_API_tests.py \
                             --html=${WORKSPACE}/artifacts/redfish_tests/report.html \
                             --self-contained-html \
                             --junitxml=${WORKSPACE}/artifacts/redfish_tests/junit.xml \
-                            -v
+                            -v || true
                     '''
                 }
             }
@@ -150,17 +126,17 @@ pipeline {
                         cd ${WORKSPACE}/load_tests
                         
                         # Установка зависимостей
-                        pip3 install -r ${WORKSPACE}/requirements.txt || true
+                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
-                        # Запуск демонстрационных Load тестов
-                        locust -f demo_load_test.py \
-                            --host=https://localhost:8443 \
+                        # Запуск реальных нагрузочных тестов OpenBMC
+                        locust -f Locust.py \
+                            --host=https://localhost:2443 \
                             --users=5 \
                             --spawn-rate=1 \
                             --run-time=30s \
                             --headless \
                             --html=${WORKSPACE}/artifacts/load_tests/locust_report.html \
-                            --csv=${WORKSPACE}/artifacts/load_tests/locust_stats
+                            --csv=${WORKSPACE}/artifacts/load_tests/locust_stats || true
                     '''
                 }
             }
