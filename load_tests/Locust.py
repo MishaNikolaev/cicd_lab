@@ -6,19 +6,17 @@ class OpenBMCUser(HttpUser):
     wait_time = between(2, 5)
 
     def on_start(self):
-        # Ожидание готовности OpenBMC
         import time
-        max_wait = 30  # 30 секунд
+        max_wait = 30  #
         wait_time = 0
         interval = 2
         
         print("Ожидание готовности OpenBMC для нагрузочного тестирования...")
         while wait_time < max_wait:
             try:
-                # Проверяем доступность Redfish API
                 test_response = self.client.get("/redfish/v1/", verify=False, timeout=5)
-                if test_response.status_code in [200, 401, 403]:  # API доступен
-                    print(f"✅ OpenBMC готов для нагрузочного тестирования (проверка заняла {wait_time} секунд)")
+                if test_response.status_code in [200, 401, 403]:
+                    print(f"OpenBMC готов для нагрузочного тестирования (проверка заняла {wait_time} секунд)")
                     break
             except:
                 pass
@@ -28,7 +26,7 @@ class OpenBMCUser(HttpUser):
             wait_time += interval
         
         if wait_time >= max_wait:
-            print("⚠ OpenBMC не готов, но нагрузочное тестирование продолжит выполнение")
+            print("OpenBMC не готов, но нагрузочное тестирование продолжит выполнение")
         
         try:
             auth_response = self.client.post(
@@ -42,13 +40,13 @@ class OpenBMCUser(HttpUser):
                 token = auth_response.headers.get("X-Auth-Token")
                 if token:
                     self.client.headers["X-Auth-Token"] = token
-                    print(f"✅ Успешная аутентификация, токен получен")
+                    print(f"Успешная аутентификация, токен получен")
                 else:
-                    print("⚠ Ошибка: токен не получен")
+                    print("Ошибка: токен не получен")
             else:
-                print(f"⚠ Ошибка аутентификации: {auth_response.status_code}")
+                print(f"Ошибка аутентификации: {auth_response.status_code}")
         except Exception as e:
-            print(f"⚠ Ошибка подключения к OpenBMC: {e}")
+            print(f"Ошибка подключения к OpenBMC: {e}")
 
     @task(3)
     def get_system_info(self):

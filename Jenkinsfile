@@ -59,7 +59,7 @@ pipeline {
                         
                         echo "Финальная проверка доступности OpenBMC..."
                         curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ || true
-                        echo "⚠ OpenBMC может быть еще не готов, но тесты продолжат выполнение"
+                        echo "OpenBMC может быть еще не готов, но тесты продолжат выполнение"
                     '''
                 }
             }
@@ -82,10 +82,8 @@ pipeline {
                     sh '''
                         cd ${WORKSPACE}/web_ui_tests
                         
-                        # Установка зависимостей
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
-                        # Запуск тестов с генерацией HTML отчета
                         pytest web_ui_tests.py \
                             --html=${WORKSPACE}/artifacts/web_ui_tests/report.html \
                             --self-contained-html \
@@ -113,7 +111,6 @@ pipeline {
                     sh '''
                         cd ${WORKSPACE}/redfish_api_tests
                         
-                        # Ожидание готовности OpenBMC
                         echo "Ожидание готовности OpenBMC для Redfish API..."
                         MAX_WAIT=120
                         WAIT_TIME=0
@@ -121,7 +118,7 @@ pipeline {
                         
                         while [ $WAIT_TIME -lt $MAX_WAIT ]; do
                             if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
-                                echo "✅ OpenBMC готов для Redfish API тестов"
+                                echo "OpenBMC готов для Redfish API тестов"
                                 break
                             fi
                             
@@ -134,10 +131,8 @@ pipeline {
                             echo "⚠ OpenBMC не готов, но тесты продолжат выполнение"
                         fi
                         
-                        # Установка зависимостей
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
-                        # Запуск тестов
                         pytest Redfish_API_tests.py \
                             --html=${WORKSPACE}/artifacts/redfish_tests/report.html \
                             --self-contained-html \
@@ -156,7 +151,6 @@ pipeline {
                     sh '''
                         cd ${WORKSPACE}/load_tests
                         
-                        # Ожидание готовности OpenBMC
                         echo "Ожидание готовности OpenBMC для нагрузочного тестирования..."
                         MAX_WAIT=120
                         WAIT_TIME=0
@@ -164,7 +158,7 @@ pipeline {
                         
                         while [ $WAIT_TIME -lt $MAX_WAIT ]; do
                             if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
-                                echo "✅ OpenBMC готов для нагрузочного тестирования"
+                                echo "OpenBMC готов для нагрузочного тестирования"
                                 break
                             fi
                             
@@ -174,13 +168,11 @@ pipeline {
                         done
                         
                         if [ $WAIT_TIME -ge $MAX_WAIT ]; then
-                            echo "⚠ OpenBMC не готов, но тесты продолжат выполнение"
+                            echo "OpenBMC не готов, но тесты продолжат выполнение"
                         fi
                         
-                        # Установка зависимостей
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
-                        # Запуск Locust тестов
                         locust -f Locust.py \
                             --host=https://localhost:8443 \
                             --users=10 \
@@ -200,29 +192,20 @@ pipeline {
                     echo "=== Сборка артефактов ==="
                     
                     sh '''
-                        # Создаем общий отчет
                         cat > ${WORKSPACE}/artifacts/test_summary.md << EOF
-# Отчет о тестировании OpenBMC
 
-## Время выполнения
 - Начало: $(date -d @${BUILD_TIMESTAMP} '+%Y-%m-%d %H:%M:%S')
 - Окончание: $(date '+%Y-%m-%d %H:%M:%S')
 
-## Результаты тестов
-
-### Web UI Тесты
 - Отчет: [report.html](web_ui_tests/report.html)
 - JUnit: [junit.xml](web_ui_tests/junit.xml)
 
-### Redfish API Тесты  
 - Отчет: [report.html](redfish_tests/report.html)
 - JUnit: [junit.xml](redfish_tests/junit.xml)
 
-### Нагрузочное тестирование
 - Отчет: [locust_report.html](load_tests/locust_report.html)
 - CSV данные: [locust_stats.csv](load_tests/locust_stats.csv)
 
-### Логи QEMU
 - [qemu_startup.log](qemu_logs/qemu_startup.log)
 
 EOF

@@ -3,7 +3,6 @@ import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 import os
 
 @pytest.fixture(scope="session")
@@ -44,7 +43,6 @@ def driver():
     chrome_options.add_argument("--disable-web-security")
     
     try:
-        # Используем установленный ChromeDriver
         service = Service("/usr/local/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=chrome_options)
     except Exception as e:
