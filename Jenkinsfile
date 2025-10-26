@@ -65,21 +65,20 @@ pipeline {
                             exit 1
                         fi
                         
-                        echo "Ожидание готовности OpenBMC..."
-                        timeout=60
+                        echo "Быстрая проверка OpenBMC (максимум 15 секунд)..."
+                        timeout=15
                         elapsed=0
-                        interval=5
-                        while ! curl -k --silent --output /dev/null --connect-timeout 2 --max-time 3 https://localhost:2443/redfish/v1; do
+                        interval=2
+                        while ! curl -k --silent --output /dev/null --connect-timeout 1 --max-time 1 https://localhost:2443/redfish/v1; do
                             sleep $interval
                             elapsed=$((elapsed+interval))
                             if [ $elapsed -ge $timeout ]; then
-                                echo "OpenBMC не поднялся за $timeout секунд, но тесты продолжат выполнение"
-                                cat /tmp/qemu.log
+                                echo "OpenBMC не готов за $timeout секунд - тесты продолжат выполнение"
                                 break
                             fi
                             printf "."
                         done
-                        echo "\\nOpenBMC готов к работе или тесты продолжат выполнение"
+                        echo "\\nПродолжаем выполнение тестов"
                     '''
                 }
             }
@@ -131,15 +130,7 @@ pipeline {
                     sh '''
                         cd ${WORKSPACE}/redfish_api_tests
                         
-                        echo "Проверка готовности OpenBMC для Redfish API..."
-                        
-                        # Быстрая проверка - если не готов за 3 секунды, продолжаем
-                        if curl -k -s --connect-timeout 1 --max-time 2 https://localhost:2443/redfish/v1/ > /dev/null 2>&1; then
-                            echo "✅ Redfish API готов!"
-                        else
-                            echo "⚠ Redfish API не готов, но тесты продолжат выполнение"
-                            echo "Это нормально для демонстрации CI/CD pipeline"
-                        fi
+                        echo "Запуск Redfish API тестов..."
                         
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
@@ -161,25 +152,7 @@ pipeline {
                     sh '''
                         cd ${WORKSPACE}/load_tests
                         
-                        echo "Ожидание готовности OpenBMC для нагрузочного тестирования..."
-                        MAX_WAIT=30
-                        WAIT_TIME=0
-                        INTERVAL=3
-                        
-                        while [ $WAIT_TIME -lt $MAX_WAIT ]; do
-                            if curl -k -s --connect-timeout 1 --max-time 2 https://localhost:2443/redfish/v1/ > /dev/null 2>&1; then
-                                echo "OpenBMC готов для нагрузочного тестирования"
-                                break
-                            fi
-                            
-                            echo "Ожидание готовности OpenBMC... ($WAIT_TIME/$MAX_WAIT секунд)"
-                            sleep $INTERVAL
-                            WAIT_TIME=$((WAIT_TIME + INTERVAL))
-                        done
-                        
-                        if [ $WAIT_TIME -ge $MAX_WAIT ]; then
-                            echo "OpenBMC не готов, но тесты продолжат выполнение"
-                        fi
+                        echo "Запуск нагрузочного тестирования..."
                         
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         

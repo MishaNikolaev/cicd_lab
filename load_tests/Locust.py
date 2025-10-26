@@ -7,14 +7,14 @@ class OpenBMCUser(HttpUser):
 
     def on_start(self):
         import time
-        max_wait = 30  #
+        max_wait = 10  # Максимум 10 секунд ожидания
         wait_time = 0
-        interval = 2
+        interval = 1
         
-        print("Ожидание готовности OpenBMC для нагрузочного тестирования...")
+        print("Быстрая проверка готовности OpenBMC для нагрузочного тестирования...")
         while wait_time < max_wait:
             try:
-                test_response = self.client.get("/redfish/v1/", verify=False, timeout=5)
+                test_response = self.client.get("/redfish/v1/", verify=False, timeout=1)
                 if test_response.status_code in [200, 401, 403]:
                     print(f"OpenBMC готов для нагрузочного тестирования (проверка заняла {wait_time} секунд)")
                     break
