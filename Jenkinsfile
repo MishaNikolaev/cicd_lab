@@ -198,7 +198,7 @@ EOF
                 reportName: 'OpenBMC Test Report'
             ])
             
-            junit testResultsPattern: 'artifacts/**/junit.xml'
+            junit testResults: 'artifacts/**/junit.xml'
         }
         
         success {
