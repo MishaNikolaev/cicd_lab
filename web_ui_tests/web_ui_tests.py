@@ -67,6 +67,7 @@ def test_openbmc_auth(driver):
             print("Тест пройден: Пользователь успешно вошел в систему")
             result = True
         else:
+
             try:
                 main_page_elements = driver.find_elements(By.XPATH,
                                                           "//*[contains(text(), 'System') or contains(text(), 'Dashboard') or contains(text(), 'Overview')]")
