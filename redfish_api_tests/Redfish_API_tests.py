@@ -71,7 +71,7 @@ def system_info(auth_session):
 
 class TestRedfishAPI:
 
-    def test_01_authentication(self, auth_session):
+    def test_authentication(self, auth_session):
         try:
             response = auth_session.get(f"{BASE_URL}/", timeout=TIMEOUT)
             if response.status_code in [200, 401, 403]:
@@ -81,7 +81,7 @@ class TestRedfishAPI:
         except Exception as e:
             assert False, f"Redfish API недоступен: {e}"
 
-    def test_02_system_info(self, auth_session, system_info):
+    def test_system_info(self, auth_session, system_info):
         try:
             required_fields = ["@odata.id", "@odata.type", "Status"]
             for field in required_fields:
@@ -89,7 +89,7 @@ class TestRedfishAPI:
         except Exception as e:
             assert False, f"Не удалось получить информацию о системе: {e}"
 
-    def test_03_power_management(self, auth_session, system_info):
+    def test_power_management(self, auth_session, system_info):
         try:
             if "Actions" not in system_info or "#ComputerSystem.Reset" not in system_info["Actions"]:
                 assert False, "Действие Reset недоступно"
@@ -103,7 +103,7 @@ class TestRedfishAPI:
         except Exception as e:
             assert False, f"Ошибка в управлении питанием: {e}"
 
-    def test_04_cpu_temperature(self, auth_session):
+    def test_cpu_temperature(self, auth_session):
         try:
             thermal_url = f"{BASE_URL}/Chassis/chassis/ThermalSubSystem"
             resp = auth_session.get(thermal_url, timeout=TIMEOUT)
@@ -126,7 +126,7 @@ class TestRedfishAPI:
         except Exception as e:
             pytest.skip(f"Ошибка в температурных датчиках: {e}")
 
-    def test_05_cpu_sensors_consistency(self, auth_session):
+    def test_cpu_sensors_consistency(self, auth_session):
         try:
             resp = auth_session.get(f"{BASE_URL}/Systems/system", timeout=TIMEOUT)
             if resp.status_code == 200:
@@ -136,7 +136,7 @@ class TestRedfishAPI:
         except Exception as e:
             assert False, f"Ошибка при получении системной информации: {e}"
 
-    def test_06_session_management(self, auth_session):
+    def test_session_management(self, auth_session):
         try:
             resp = auth_session.get(f"{BASE_URL}/SessionService", timeout=TIMEOUT)
             if resp.status_code == 200:
