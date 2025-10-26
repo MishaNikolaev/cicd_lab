@@ -51,7 +51,8 @@ pipeline {
                             -M romulus-bmc \
                             -nographic \
                             -drive file=obmc-phosphor-image-romulus-20250902012112.static.mtd,format=raw,if=mtd \
-                            -net user,hostfwd=tcp::2443-:443,hostfwd=tcp::8082-:80 \
+                            -net nic \
+                            -net user,hostfwd=tcp::2443-:443,hostfwd=tcp::8082-:80,hostname=qemu \
                             > /tmp/qemu.log 2>&1 &
                         
                         QEMU_PID=$!
