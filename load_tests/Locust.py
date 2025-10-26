@@ -26,7 +26,9 @@ class OpenBMCUser(HttpUser):
             wait_time += interval
         
         if wait_time >= max_wait:
-            print("OpenBMC не готов, но нагрузочное тестирование продолжит выполнение")
+            print("OpenBMC не готов, завершение нагрузочного тестирования")
+            self.environment.runner.quit()
+            return
         
         try:
             auth_response = self.client.post(
