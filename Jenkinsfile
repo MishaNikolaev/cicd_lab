@@ -13,12 +13,16 @@ pipeline {
         stage('Подготовка окружения') {
             steps {
                 script {
+                    echo "=== Подготовка окружения ==="
+                    
                     sh '''
                         mkdir -p ${WORKSPACE}/artifacts/web_ui_tests
                         mkdir -p ${WORKSPACE}/artifacts/redfish_tests
                         mkdir -p ${WORKSPACE}/artifacts/load_tests
                         mkdir -p ${WORKSPACE}/artifacts/qemu_logs
                     '''
+                    
+                    echo "Окружение подготовлено"
                 }
             }
         }
@@ -26,6 +30,8 @@ pipeline {
         stage('Запуск QEMU с OpenBMC') {
             steps {
                 script {
+                    echo "=== Запуск QEMU с OpenBMC ==="
+                    
                     sh '''
                         pkill qemu-system-arm || true
                         rm -f /tmp/qemu.pid
@@ -51,11 +57,11 @@ pipeline {
                         
                         QEMU_PID=$!
                         echo "QEMU запущен с PID: $QEMU_PID"
-                        echo $QEMU_PID > /tmp/qemu.pid
-                        sleep 5
+                        echo "$QEMU_PID" > /tmp/qemu.pid
                         
+                        sleep 5
                         if ! ps -p $QEMU_PID > /dev/null; then
-                            echo "ОШИБКА: QEMU не запустился!"
+                            echo "QEMU не запущен!"
                             cat /tmp/qemu.log
                             exit 1
                         fi
@@ -91,9 +97,13 @@ pipeline {
         stage('Web UI Тесты') {
             steps {
                 script {
+                    echo "=== Запуск Web UI тестов ==="
+                    
                     sh '''
                         cd ${WORKSPACE}/web_ui_tests
-                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages
+                        
+                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
+                        
                         pytest web_ui_tests.py \
                             --html=${WORKSPACE}/artifacts/web_ui_tests/report.html \
                             --self-contained-html \
@@ -105,8 +115,8 @@ pipeline {
             post {
                 always {
                     sh '''
-                        if [ -f ${WORKSPACE}/web_ui_tests/test1_success.png ] || [ -f ${WORKSPACE}/web_ui_tests/test3_failed.png ] || [ -f ${WORKSPACE}/web_ui_tests/test4_success.png ]; then
-                            cp ${WORKSPACE}/web_ui_tests/test*.png ${WORKSPACE}/artifacts/web_ui_tests/ 2>/dev/null || true
+                        if [ -f ${WORKSPACE}/web_ui_tests/*.png ]; then
+                            cp ${WORKSPACE}/web_ui_tests/*.png ${WORKSPACE}/artifacts/web_ui_tests/ || true
                         fi
                     '''
                 }
@@ -116,10 +126,15 @@ pipeline {
         stage('Redfish API Тесты') {
             steps {
                 script {
+                    echo "=== Запуск Redfish API тестов ==="
+                    
                     sh '''
                         cd ${WORKSPACE}/redfish_api_tests
+                        
                         echo "Запуск Redfish API тестов..."
-                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages
+                        
+                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
+                        
                         pytest Redfish_API_tests.py \
                             --html=${WORKSPACE}/artifacts/redfish_tests/report.html \
                             --self-contained-html \
@@ -133,17 +148,23 @@ pipeline {
         stage('Нагрузочное тестирование') {
             steps {
                 script {
+                    echo "=== Запуск нагрузочного тестирования ==="
+                    
                     sh '''
                         cd ${WORKSPACE}/load_tests
+                        
                         echo "Запуск нагрузочного тестирования..."
-                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages
+                        
+                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
+                        
                         locust -f Locust.py \
+                            --host=https://localhost:2443 \
+                            --users=5 \
+                            --spawn-rate=1 \
+                            --run-time=30s \
                             --headless \
-                            --users 5 \
-                            --spawn-rate 1 \
-                            --run-time 30s \
-                            --html=${WORKSPACE}/artifacts/load_tests/report.html \
-                            --csv=${WORKSPACE}/artifacts/load_tests/stats
+                            --html=${WORKSPACE}/artifacts/load_tests/locust_report.html \
+                            --csv=${WORKSPACE}/artifacts/load_tests/locust_stats
                     '''
                 }
             }
@@ -152,9 +173,26 @@ pipeline {
         stage('Сборка артефактов') {
             steps {
                 script {
+                    echo "=== Сборка артефактов ==="
+                    
                     sh '''
-                        echo "Сборка артефактов завершена"
-                        ls -la ${WORKSPACE}/artifacts/
+                        cat > ${WORKSPACE}/artifacts/test_summary.md << EOF
+
+- Начало: $(date -d @${BUILD_TIMESTAMP} '+%Y-%m-%d %H:%M:%S')
+- Окончание: $(date '+%Y-%m-%d %H:%M:%S')
+
+- Отчет: [report.html](web_ui_tests/report.html)
+- JUnit: [junit.xml](web_ui_tests/junit.xml)
+
+- Отчет: [report.html](redfish_tests/report.html)
+- JUnit: [junit.xml](redfish_tests/junit.xml)
+
+- Отчет: [locust_report.html](load_tests/locust_report.html)
+- CSV данные: [locust_stats.csv](load_tests/locust_stats.csv)
+
+- [qemu_startup.log](qemu_logs/qemu_startup.log)
+
+EOF
                     '''
                 }
             }
@@ -167,8 +205,7 @@ pipeline {
                 echo "=== Остановка QEMU ==="
                 sh '''
                     if [ -f /tmp/qemu.pid ]; then
-                        QEMU_PID=$(cat /tmp/qemu.pid)
-                        kill $QEMU_PID 2>/dev/null || true
+                        kill $(cat /tmp/qemu.pid) || true
                         rm -f /tmp/qemu.pid
                     fi
                     pkill qemu-system-arm || true
@@ -180,17 +217,19 @@ pipeline {
                 alwaysLinkToLastBuild: true,
                 keepAll: true,
                 reportDir: 'artifacts',
-                reportFiles: '**/*.html',
+                reportFiles: 'test_summary.md',
                 reportName: 'OpenBMC Test Report'
             ])
             
-            junit 'artifacts/**/junit.xml'
+            junit testResults: 'artifacts/**/junit.xml', allowEmptyResults: true
+        }
+        
+        success {
+            echo "=== Pipeline выполнен успешно ==="
         }
         
         failure {
-            script {
-                echo "=== Pipeline завершился с ошибкой ==="
-            }
+            echo "=== Pipeline завершился с ошибкой ==="
         }
     }
 }

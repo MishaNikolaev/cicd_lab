@@ -7,7 +7,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 BASE_URL = "https://localhost:2443/redfish/v1"
 USERNAME = "root"
 PASSWORD = "0penBmc"
-TIMEOUT = 5  # Очень быстрые тесты - 5 секунд максимум
+TIMEOUT = 5
 
 AUTH_TOKEN = None
 
