@@ -30,7 +30,7 @@ echo "QEMU запущен с PID: $QEMU_PID"
 echo "$QEMU_PID" > /tmp/qemu.pid
 
 echo "Ожидание запуска OpenBMC..."
-MAX_WAIT=120
+MAX_WAIT=130
 WAIT_TIME=0
 INTERVAL=10
 
