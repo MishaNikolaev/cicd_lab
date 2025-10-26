@@ -66,19 +66,15 @@ pipeline {
                             exit 1
                         fi
                         
-                        echo "Ожидание полной готовности OpenBMC (максимум 120 секунд)..."
-                        timeout=120
+                        echo "Быстрая проверка OpenBMC (максимум 30 секунд)..."
+                        timeout=30
                         elapsed=0
-                        interval=5
-                        while ! curl -k --silent --output /dev/null --connect-timeout 3 --max-time 5 https://localhost:2443/redfish/v1; do
+                        interval=3
+                        while ! curl -k --silent --output /dev/null --connect-timeout 2 --max-time 3 https://localhost:2443/redfish/v1; do
                             sleep $interval
                             elapsed=$((elapsed+interval))
                             if [ $elapsed -ge $timeout ]; then
                                 echo "OpenBMC не готов за $timeout секунд - тесты продолжат выполнение"
-                                echo "Проверяем статус QEMU..."
-                                ps aux | grep qemu || echo "QEMU не найден"
-                                echo "Проверяем порт 2443..."
-                                netstat -tlnp | grep 2443 || echo "Порт 2443 не слушается"
                                 break
                             fi
                             printf "."
