@@ -21,7 +21,7 @@ def driver():
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-plugins")
     chrome_options.add_argument("--disable-images")
-    chrome_options.add_argument("--disable-javascript")
+    # chrome_options.add_argument("--disable-javascript")  # Убираем отключение JS для работы с современными веб-приложениями
     
     chrome_options.add_argument("--ignore-certificate-errors-spki-list")
     chrome_options.add_argument("--ignore-certificate-errors")

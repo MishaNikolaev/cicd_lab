@@ -38,7 +38,7 @@ def auth_session():
         wait_time += interval
     
     if wait_time >= max_wait:
-        pytest.skip("OpenBMC не готов в течение 60 секунд")
+        print("⚠ OpenBMC не готов в течение 60 секунд, но тесты продолжат выполнение")
 
     try:
         response = session.post(
@@ -79,7 +79,9 @@ class TestRedfishAPI:
             assert response.status_code in [200, 401, 403], f"Ожидался статус 200, 401 или 403, получен {response.status_code}"
             print(f"✅ Redfish API доступен, статус: {response.status_code}")
         except Exception as e:
-            pytest.skip(f"Redfish API недоступен: {e}")
+            print(f"⚠ Redfish API недоступен: {e}")
+            # Не пропускаем тест, а делаем его неуспешным
+            assert False, f"Redfish API недоступен: {e}"
 
     def test_02_system_info(self, auth_session, system_info):
         try:
@@ -88,12 +90,14 @@ class TestRedfishAPI:
                 assert field in system_info, f"Поле {field} не найдено в system_info"
             print("Информация о системе получена успешно")
         except Exception as e:
-            pytest.skip(f"Не удалось получить информацию о системе: {e}")
+            print(f"⚠ Не удалось получить информацию о системе: {e}")
+            assert False, f"Не удалось получить информацию о системе: {e}"
 
     def test_03_power_management(self, auth_session, system_info):
         try:
             if "Actions" not in system_info or "#ComputerSystem.Reset" not in system_info["Actions"]:
-                pytest.skip("Действие Reset недоступно")
+                print("⚠ Действие Reset недоступно")
+                assert False, "Действие Reset недоступно"
             for reset_type in ["GracefulRestart", "ForceRestart"]:
                 resp = auth_session.post(
                     f"{BASE_URL}/Systems/system/Actions/ComputerSystem.Reset",
@@ -103,18 +107,21 @@ class TestRedfishAPI:
                 assert resp.status_code in [200, 202, 204, 400], f"Неожиданный статус для {reset_type}: {resp.status_code}"
             print("Управление питанием работает корректно")
         except Exception as e:
-            pytest.skip(f"Ошибка в управлении питанием: {e}")
+            print(f"⚠ Ошибка в управлении питанием: {e}")
+            assert False, f"Ошибка в управлении питанием: {e}"
 
     def test_04_cpu_temperature(self, auth_session):
         try:
             thermal_url = f"{BASE_URL}/Chassis/chassis/ThermalSubSystem"
             resp = auth_session.get(thermal_url, timeout=TIMEOUT)
             if resp.status_code != 200:
-                pytest.skip("Thermal endpoint недоступен")
+                print("⚠ Thermal endpoint недоступен")
+                assert False, "Thermal endpoint недоступен"
             data = resp.json()
             temperatures = data.get("Temperatures", [])
             if not temperatures:
-                pytest.skip("Температурные датчики не найдены")
+                print("⚠ Температурные датчики не найдены")
+                assert False, "Температурные датчики не найдены"
             for sensor in temperatures:
                 temp = sensor.get("ReadingCelsius")
                 if temp is not None:
@@ -127,7 +134,8 @@ class TestRedfishAPI:
                     assert -20 <= temp <= 120, f"Температура {temp} вне допустимого диапазона"
             print("Температурные датчики работают корректно")
         except Exception as e:
-            pytest.skip(f"Ошибка в температурных датчиках: {e}")
+            print(f"⚠ Ошибка в температурных датчиках: {e}")
+            assert False, f"Ошибка в температурных датчиках: {e}"
 
     def test_05_cpu_sensors_consistency(self, auth_session):
         try:
@@ -135,7 +143,8 @@ class TestRedfishAPI:
             assert resp.status_code == 200, f"Ожидался статус 200, получен {resp.status_code}"
             print("Системная информация доступна")
         except Exception as e:
-            pytest.skip(f"Ошибка при получении системной информации: {e}")
+            print(f"⚠ Ошибка при получении системной информации: {e}")
+            assert False, f"Ошибка при получении системной информации: {e}"
 
     def test_06_session_management(self, auth_session):
         try:
@@ -143,4 +152,5 @@ class TestRedfishAPI:
             assert resp.status_code == 200, f"Ожидался статус 200, получен {resp.status_code}"
             print("Сервис сессий работает корректно")
         except Exception as e:
-            pytest.skip(f"Ошибка в управлении сессиями: {e}")
+            print(f"⚠ Ошибка в управлении сессиями: {e}")
+            assert False, f"Ошибка в управлении сессиями: {e}"

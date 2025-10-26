@@ -45,6 +45,12 @@ services:
         
         mkdir -p /var/jenkins_home/plugins &&
         
+        # Создаем директории для результатов тестов
+        mkdir -p /var/jenkins_home/workspace/artifacts/web_ui_tests &&
+        mkdir -p /var/jenkins_home/workspace/artifacts/redfish_tests &&
+        mkdir -p /var/jenkins_home/workspace/artifacts/load_tests &&
+        mkdir -p /var/jenkins_home/workspace/artifacts/qemu_logs &&
+        
         /usr/local/bin/jenkins.sh
       "
 

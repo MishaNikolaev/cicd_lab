@@ -1,0 +1,51 @@
+FROM python:3.11-slim
+
+WORKDIR /cicd_lab
+
+# Установка системных зависимостей
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    python3-full \
+    curl \
+    wget \
+    git \
+    openssh-client \
+    qemu-system-arm \
+    qemu-utils \
+    chromium \
+    xvfb \
+    chromium-driver \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Создаем симлинк для chromedriver
+RUN ln -sf /usr/bin/chromedriver /usr/local/bin/chromedriver
+
+# Копируем файлы проекта
+COPY ./web_ui_tests ./web_ui_tests
+COPY ./redfish_api_tests ./redfish_api_tests
+COPY ./load_tests ./load_tests
+COPY ./scripts ./scripts
+COPY ./requirements.txt ./requirements.txt
+
+# Установка Python зависимостей
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# Создаем wrapper для Chrome
+RUN echo '#!/bin/bash' > /usr/local/bin/chrome-wrapper && \
+    echo 'exec /usr/bin/chromium --no-sandbox --disable-dev-shm-usage --disable-gpu --headless --remote-debugging-port=9222 "$@"' >> /usr/local/bin/chrome-wrapper && \
+    chmod +x /usr/local/bin/chrome-wrapper
+
+# Устанавливаем права на скрипты
+RUN chmod +x ./scripts/*.sh
+
+# Создаем директории для результатов
+RUN mkdir -p /tmp/results
+
+CMD ["python", "-m", "pytest", "--version"]

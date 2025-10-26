@@ -48,18 +48,23 @@ pipeline {
                     
                     sh '''
                         echo "Ожидание полной загрузки OpenBMC..."
-                        sleep 120
+                        sleep 60
                         
                         echo "Проверка доступности OpenBMC..."
-                        echo "Попытка {1..12}/12: проверка доступности OpenBMC..."
-                        curl -s --connect-timeout 5 --max-time 10 http://localhost:8082/ || true
-                        curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ || true
-                        echo "OpenBMC еще не готов, ждем 15 секунд..."
-                        sleep 15
-                        
-                        echo "Финальная проверка доступности OpenBMC..."
-                        curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ || true
-                        echo "OpenBMC может быть еще не готов, но тесты продолжат выполнение"
+                        timeout=180
+                        elapsed=0
+                        while ! curl -k --silent --output /dev/null --connect-timeout 5 https://localhost:8443/redfish/v1; do
+                            sleep 10
+                            elapsed=$((elapsed+10))
+                            if [ $elapsed -ge $timeout ]; then
+                                echo "OpenBMC не поднялся за $timeout секунд"
+                                cat /tmp/qemu.log
+                                echo "Продолжаем выполнение тестов..."
+                                break
+                            fi
+                            printf "."
+                        done
+                        echo "\\nOpenBMC готов к работе или тесты продолжат выполнение"
                     '''
                 }
             }
@@ -84,11 +89,12 @@ pipeline {
                         
                         pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
+                        # Запускаем тесты с реальными проверками
                         pytest web_ui_tests.py \
                             --html=${WORKSPACE}/artifacts/web_ui_tests/report.html \
                             --self-contained-html \
                             --junitxml=${WORKSPACE}/artifacts/web_ui_tests/junit.xml \
-                            -v || true
+                            -v --tb=short || true
                     '''
                 }
             }
@@ -137,7 +143,7 @@ pipeline {
                             --html=${WORKSPACE}/artifacts/redfish_tests/report.html \
                             --self-contained-html \
                             --junitxml=${WORKSPACE}/artifacts/redfish_tests/junit.xml \
-                            -v || true
+                            -v --tb=short || true
                     '''
                 }
             }

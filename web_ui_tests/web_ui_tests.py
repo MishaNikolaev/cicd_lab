@@ -4,7 +4,6 @@ import requests
 from selenium.webdriver.common.by import By
 
 def check_openbmc_availability():
-    """Проверяет доступность OpenBMC перед запуском тестов"""
     try:
         response = requests.get("https://localhost:8443", verify=False, timeout=5)
         return response.status_code in [200, 401, 403, 404]
@@ -13,8 +12,9 @@ def check_openbmc_availability():
 
 @pytest.mark.usefixtures("driver")
 def test_openbmc_auth(driver):
-    if not check_openbmc_availability():
-        pytest.skip("OpenBMC недоступен")
+    # Убираем проверку доступности - тест должен выполняться всегда
+    # if not check_openbmc_availability():
+    #     pytest.skip("OpenBMC недоступен")
     
     try:
         print("1. Открываем страницу OpenBMC...")
@@ -74,12 +74,12 @@ def test_openbmc_auth(driver):
         current_url = driver.current_url
         print(f"Текущий URL: {current_url}")
 
+        # Проверяем результат авторизации
         if current_url != "https://localhost:8443/#/login":
             print("Авторизация удалась! URL изменился")
             print("Тест пройден: Пользователь успешно вошел в систему")
             result = True
         else:
-
             try:
                 main_page_elements = driver.find_elements(By.XPATH,
                                                           "//*[contains(text(), 'System') or contains(text(), 'Dashboard') or contains(text(), 'Overview')]")
@@ -95,6 +95,9 @@ def test_openbmc_auth(driver):
                 print("Авторизация не удалась!")
                 print("Тест не пройден: Не удалось войти в систему")
                 result = False
+        
+        # Используем assert для реальной проверки
+        assert result, "Тест авторизации не пройден"
 
         screenshot_name = "test1_success.png" if result else "test1_failed.png"
         driver.save_screenshot(screenshot_name)
@@ -199,6 +202,9 @@ def test_block_account(driver):
         except AssertionError as e:
             print(f"ТЕСТ НЕ ПРОЙДЕН: {e}")
             result = False
+        
+        # Используем assert для реальной проверки
+        assert result, "Тест блокировки учетной записи не пройден"
 
         block_messages = ["Account locked", "Account blocked", "Too many attempts", "locked", "blocked"]
         for message in block_messages:
@@ -270,6 +276,9 @@ def test_fans_temp(driver):
         else:
             print("РЕЗУЛЬТАТ: Информация о температуре не найдена")
             result = False
+        
+        # Используем assert для реальной проверки
+        assert result, "Тест температурных датчиков не пройден"
 
         screenshot_name = "test4_success.png" if result else "test4_failed.png"
         driver.save_screenshot(screenshot_name)
