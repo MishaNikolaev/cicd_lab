@@ -1,16 +1,11 @@
 #!/bin/bash
 
-# Скрипт для запуска QEMU с OpenBMC
-# Используется в Jenkins pipeline
-
 set -e
 
 echo "=== Запуск QEMU с OpenBMC ==="
 
-# Переходим в директорию с образом
 cd /var/jenkins_home/workspace/romulus
 
-# Проверяем наличие MTD файла
 if [ ! -f "obmc-phosphor-image-romulus-20250902012112.static.mtd" ]; then
     echo "ОШИБКА: MTD файл не найден!"
     exit 1
@@ -18,29 +13,25 @@ fi
 
 echo "MTD файл найден: obmc-phosphor-image-romulus-20250902012112.static.mtd"
 
-# Создаем временный файл для логов QEMU
 QEMU_LOG="/tmp/qemu.log"
 
-# Запускаем QEMU в фоновом режиме
 echo "Запуск QEMU..."
 nohup qemu-system-arm \
     -M romulus-bmc \
     -nographic \
     -drive file=obmc-phosphor-image-romulus-20250902012112.static.mtd,format=raw,if=mtd \
     -netdev user,id=net0,hostfwd=tcp::2443-:443,hostfwd=tcp::8081-:80 \
-    -device virtio-net-device,netdev=net0 \
+    -device smc91c111,netdev=net0 \
     -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
     > "$QEMU_LOG" 2>&1 &
 
 QEMU_PID=$!
 echo "QEMU запущен с PID: $QEMU_PID"
 
-# Сохраняем PID для последующего завершения
 echo "$QEMU_PID" > /tmp/qemu.pid
 
-# Ждем запуска OpenBMC (до 5 минут)
 echo "Ожидание запуска OpenBMC..."
-MAX_WAIT=300
+MAX_WAIT=200
 WAIT_TIME=0
 INTERVAL=10
 

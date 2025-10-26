@@ -11,7 +11,6 @@ def test_openbmc_auth(driver):
         print(f"Страница открыта: {driver.current_url}")
         print(f"Заголовок страницы: '{driver.title}'")
 
-        # Шаг 2: Ищем форму логина
         print("2. Поиск формы логина...")
         inputs = driver.find_elements(By.TAG_NAME, "input")
         print(f"Найдено input полей: {len(inputs)}")
@@ -24,7 +23,6 @@ def test_openbmc_auth(driver):
             print(
                 f"Поле {i + 1}: type='{field_type}', id='{field_id}', name='{field_name}', placeholder='{field_placeholder}'")
 
-        # Шаг 3: Заполняем форму логина
         print("3. Заполняем форму логина...")
         username_field = None
         password_field = None
@@ -43,7 +41,6 @@ def test_openbmc_auth(driver):
         else:
             print("Не удалось найти поля для ввода")
 
-        # Шаг 4: Находим и нажимаем кнопку Log in
         print("4. Ищем кнопку Log in...")
         login_button = None
         buttons = driver.find_elements(By.TAG_NAME, "button")
@@ -60,7 +57,6 @@ def test_openbmc_auth(driver):
             for i, btn in enumerate(buttons):
                 print(f"Кнопка {i}: '{btn.text}'")
 
-        # Шаг 5: Проверяем результат авторизации
         print("5. Проверяем результат авторизации...")
         time.sleep(5)
         current_url = driver.current_url

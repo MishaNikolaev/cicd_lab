@@ -15,7 +15,6 @@ pipeline {
                 script {
                     echo "=== Подготовка окружения ==="
                     
-                    // Создаем директории для артефактов
                     sh '''
                         mkdir -p ${WORKSPACE}/artifacts/web_ui_tests
                         mkdir -p ${WORKSPACE}/artifacts/redfish_tests
@@ -23,7 +22,6 @@ pipeline {
                         mkdir -p ${WORKSPACE}/artifacts/qemu_logs
                     '''
                     
-                    // Устанавливаем права на скрипты
                     sh 'chmod +x ${WORKSPACE}/scripts/*.sh'
                     
                     echo "Окружение подготовлено"
@@ -36,7 +34,6 @@ pipeline {
                 script {
                     echo "=== Запуск QEMU с OpenBMC ==="
                     
-                    // Останавливаем предыдущие экземпляры QEMU
                     sh '''
                         if [ -f ${QEMU_PID_FILE} ]; then
                             echo "Остановка предыдущего экземпляра QEMU..."
@@ -44,13 +41,11 @@ pipeline {
                         fi
                     '''
                     
-                    // Запускаем QEMU
                     sh '''
                         echo "Запуск QEMU..."
                         ${WORKSPACE}/scripts/start_qemu.sh
                     '''
                     
-                    // Ждем запуска OpenBMC
                     sh '''
                         echo "Ожидание запуска OpenBMC..."
                         timeout 300 bash -c 'until curl -k -s https://localhost:2443 > /dev/null 2>&1; do sleep 10; done'
@@ -60,7 +55,6 @@ pipeline {
             }
             post {
                 always {
-                    // Сохраняем логи QEMU
                     sh '''
                         if [ -f /tmp/qemu.log ]; then
                             cp /tmp/qemu.log ${WORKSPACE}/artifacts/qemu_logs/qemu_startup.log
@@ -92,7 +86,6 @@ pipeline {
             }
             post {
                 always {
-                    // Сохраняем скриншоты
                     sh '''
                         if [ -f ${WORKSPACE}/web_ui_tests/*.png ]; then
                             cp ${WORKSPACE}/web_ui_tests/*.png ${WORKSPACE}/artifacts/web_ui_tests/ || true
@@ -189,7 +182,6 @@ EOF
 
     post {
         always {
-            // Остановка QEMU
             script {
                 echo "=== Остановка QEMU ==="
                 sh '''
@@ -197,7 +189,6 @@ EOF
                 '''
             }
             
-            // Публикация артефактов
             publishHTML([
                 allowMissing: false,
                 alwaysLinkToLastBuild: true,
@@ -207,7 +198,7 @@ EOF
                 reportName: 'OpenBMC Test Report'
             ])
             
-            publishTestResults testResultsPattern: 'artifacts/**/junit.xml'
+            junit testResultsPattern: 'artifacts/**/junit.xml'
         }
         
         success {
