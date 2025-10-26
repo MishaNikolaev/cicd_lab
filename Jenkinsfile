@@ -132,9 +132,9 @@ pipeline {
                         cd ${WORKSPACE}/redfish_api_tests
                         
                         echo "Ожидание готовности OpenBMC для Redfish API..."
-                        MAX_WAIT=300
+                        MAX_WAIT=60  # Уменьшаем до 1 минуты
                         WAIT_TIME=0
-                        INTERVAL=10
+                        INTERVAL=5
                         
                         while [ $WAIT_TIME -lt $MAX_WAIT ]; do
                             # Проверяем разные эндпоинты Redfish API

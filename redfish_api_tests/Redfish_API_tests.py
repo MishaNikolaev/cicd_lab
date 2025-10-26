@@ -19,14 +19,13 @@ def auth_session():
     session.verify = False
 
     import time
-    max_wait = 300  # Увеличиваем до 5 минут
+    max_wait = 60  # Уменьшаем до 1 минуты
     wait_time = 0
-    interval = 10  # Увеличиваем интервал до 10 секунд
+    interval = 5  # Уменьшаем интервал до 5 секунд  
     
     print("Ожидание готовности OpenBMC...")
     while wait_time < max_wait:
         try:
-            # Проверяем основной эндпоинт Redfish API
             test_response = session.get(f"{BASE_URL}/", timeout=10)
             if test_response.status_code in [200, 401, 403]:
                 print(f"Redfish API готов (проверка заняла {wait_time} секунд)")
@@ -34,7 +33,6 @@ def auth_session():
         except:
             pass
         
-        # Дополнительная проверка - пробуем получить системную информацию
         try:
             systems_response = session.get(f"{BASE_URL}/Systems/", timeout=10)
             if systems_response.status_code in [200, 401, 403]:
@@ -48,7 +46,7 @@ def auth_session():
         wait_time += interval
     
     if wait_time >= max_wait:
-        print("⚠ OpenBMC не готов в течение 300 секунд, но тесты продолжат выполнение")
+        print("⚠ OpenBMC не готов в течение 60 секунд, но тесты продолжат выполнение")
 
     try:
         response = session.post(
