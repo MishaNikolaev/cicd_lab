@@ -30,12 +30,17 @@ echo "QEMU запущен с PID: $QEMU_PID"
 echo "$QEMU_PID" > /tmp/qemu.pid
 
 echo "Ожидание запуска OpenBMC..."
-MAX_WAIT=180
+MAX_WAIT=60
 WAIT_TIME=0
 INTERVAL=10
 
 while [ $WAIT_TIME -lt $MAX_WAIT ]; do
-    if curl -k -s https://localhost:8443 > /dev/null 2>&1; then
+    if grep -q "romulus login:" "$QEMU_LOG" 2>/dev/null; then
+        echo "OpenBMC система загрузилась! Приглашение к входу обнаружено."
+        echo "QEMU PID: $QEMU_PID"
+        echo "Система готова для тестирования"
+        exit 0
+    elif curl -k -s https://localhost:8443 > /dev/null 2>&1; then
         echo "OpenBMC успешно запущен и доступен на https://localhost:8443"
         echo "QEMU PID: $QEMU_PID"
         exit 0
@@ -46,6 +51,17 @@ while [ $WAIT_TIME -lt $MAX_WAIT ]; do
     fi
     
     echo "Ожидание... ($WAIT_TIME/$MAX_WAIT секунд)"
+    
+    if grep -q "Starting kernel" "$QEMU_LOG" 2>/dev/null; then
+        echo "✓ Ядро Linux запущено"
+    fi
+    if grep -q "systemd" "$QEMU_LOG" 2>/dev/null; then
+        echo "✓ Systemd сервисы запускаются"
+    fi
+    if grep -q "Phosphor OpenBMC" "$QEMU_LOG" 2>/dev/null; then
+        echo "✓ OpenBMC система инициализируется"
+    fi
+    
     echo "Проверка сетевого подключения:"
     echo "  - Проверка HTTPS (8443): $(curl -k -s -o /dev/null -w '%{http_code}' https://localhost:8443 2>/dev/null || echo 'недоступен')"
     echo "  - Проверка HTTP (8082): $(curl -s -o /dev/null -w '%{http_code}' http://localhost:8082 2>/dev/null || echo 'недоступен')"
@@ -55,10 +71,19 @@ done
 
 echo "ПРЕДУПРЕЖДЕНИЕ: OpenBMC не ответил в течение $MAX_WAIT секунд"
 echo "Но QEMU продолжает работать в фоне с PID: $QEMU_PID"
-echo "Попробуйте подключиться к OpenBMC вручную:"
+
+if grep -q "romulus login:" "$QEMU_LOG" 2>/dev/null; then
+    echo "✓ Система загрузилась! Приглашение к входу найдено."
+    echo "✓ OpenBMC готов для тестирования через консоль"
+else
+    echo "⚠ Система еще загружается..."
+fi
+
+echo ""
+echo "Для подключения к OpenBMC используйте:"
 echo "  HTTPS: https://localhost:8443"
 echo "  HTTP:  http://localhost:8082"
-echo "Логи QEMU:"
-cat "$QEMU_LOG"
+echo "  Консоль: docker exec jenkins tail -f /tmp/qemu.log"
+echo ""
 echo "QEMU процесс оставлен запущенным для дальнейшего тестирования"
 exit 0
