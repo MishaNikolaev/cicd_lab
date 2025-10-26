@@ -45,6 +45,22 @@ pipeline {
                         echo "Запуск QEMU..."
                         ${WORKSPACE}/scripts/start_qemu.sh
                     '''
+                    
+                    sh '''
+                        echo "Ожидание полной загрузки OpenBMC..."
+                        sleep 60
+                        
+                        echo "Проверка доступности OpenBMC..."
+                        echo "Попытка {1..12}/12: проверка доступности OpenBMC..."
+                        curl -s --connect-timeout 5 --max-time 10 http://localhost:8082/ || true
+                        curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ || true
+                        echo "OpenBMC еще не готов, ждем 15 секунд..."
+                        sleep 15
+                        
+                        echo "Финальная проверка доступности OpenBMC..."
+                        curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ || true
+                        echo "⚠ OpenBMC может быть еще не готов, но тесты продолжат выполнение"
+                    '''
                 }
             }
             post {
@@ -67,7 +83,7 @@ pipeline {
                         cd ${WORKSPACE}/web_ui_tests
                         
                         # Установка зависимостей
-                        pip3 install -r ${WORKSPACE}/requirements.txt || true
+                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
                         # Запуск тестов с генерацией HTML отчета
                         pytest web_ui_tests.py \
@@ -98,7 +114,7 @@ pipeline {
                         cd ${WORKSPACE}/redfish_api_tests
                         
                         # Установка зависимостей
-                        pip3 install -r ${WORKSPACE}/requirements.txt || true
+                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
                         # Запуск тестов
                         pytest Redfish_API_tests.py \
@@ -120,7 +136,7 @@ pipeline {
                         cd ${WORKSPACE}/load_tests
                         
                         # Установка зависимостей
-                        pip3 install -r ${WORKSPACE}/requirements.txt || true
+                        pip3 install -r ${WORKSPACE}/requirements.txt --break-system-packages || true
                         
                         # Запуск Locust тестов
                         locust -f Locust.py \

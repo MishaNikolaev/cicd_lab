@@ -31,26 +31,10 @@ echo "QEMU запущен с PID: $QEMU_PID"
 echo "$QEMU_PID" > /tmp/qemu.pid
 
 echo "QEMU процесс запущен в фоне"
-echo "Ожидание запуска OpenBMC..."
-MAX_WAIT=300
-WAIT_TIME=0
-INTERVAL=10
-
-while [ $WAIT_TIME -lt $MAX_WAIT ]; do
-    if curl -k -s --connect-timeout 5 --max-time 10 https://localhost:8443/redfish/v1/ > /dev/null 2>&1; then
-        echo "✅ OpenBMC успешно запущен и доступен на https://localhost:8443"
-        echo "QEMU PID: $QEMU_PID"
-        exit 0
-    fi
-    
-    echo "Ожидание... ($WAIT_TIME/$MAX_WAIT секунд)"
-    sleep $INTERVAL
-    WAIT_TIME=$((WAIT_TIME + INTERVAL))
-done
-
-echo "⚠ OpenBMC не запустился в течение $MAX_WAIT секунд"
-echo "Логи QEMU:"
-cat "$QEMU_LOG"
+echo "Для подключения к OpenBMC используйте:"
+echo "  HTTPS: https://localhost:8443"
+echo "  HTTP:  http://localhost:8082"
+echo "  Консоль: docker exec jenkins tail -f /tmp/qemu.log"
 echo ""
 echo "QEMU процесс оставлен запущенным для дальнейшего тестирования"
 exit 0
