@@ -4,7 +4,7 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-BASE_URL = "https://localhost:2443/redfish/v1"
+BASE_URL = "https://localhost:8443/redfish/v1"
 USERNAME = "root"
 PASSWORD = "0penBmc"
 TIMEOUT = 30

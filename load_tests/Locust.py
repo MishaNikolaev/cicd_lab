@@ -2,7 +2,7 @@ from locust import HttpUser, task, between
 
 class OpenBMCUser(HttpUser):
 
-    host = "https://localhost:2443"
+    host = "https://localhost:8443"
     wait_time = between(2, 5)
 
     def on_start(self):

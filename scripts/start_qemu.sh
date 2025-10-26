@@ -48,7 +48,6 @@ while [ $WAIT_TIME -lt $MAX_WAIT ]; do
         exit 0
     fi
     
-    # Показываем статус портов с коротким таймаутом
     echo "Статус портов:"
     echo "  - HTTPS (8443): $(curl -k -s --connect-timeout 1 --max-time 2 -o /dev/null -w '%{http_code}' https://localhost:8443 2>/dev/null || echo 'недоступен')"
     echo "  - HTTP (8082): $(curl -s --connect-timeout 1 --max-time 2 -o /dev/null -w '%{http_code}' http://localhost:8082 2>/dev/null || echo 'недоступен')"
