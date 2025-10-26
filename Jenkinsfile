@@ -46,7 +46,7 @@ pipeline {
                         ${WORKSPACE}/scripts/start_qemu.sh
                         
                         echo "Ожидание полной загрузки OpenBMC..."
-                        sleep 60
+                        sleep 120
                         
                         echo "Проверка доступности OpenBMC..."
                         for i in {1..12}; do
